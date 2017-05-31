@@ -81,6 +81,7 @@ gadget.team = allowedTeams
 
 
 -- If no AIs are in the game, ask for a quiet death.
+--[[
 do
 	local name = gadget:GetInfo().name
 	local count = 0
@@ -96,6 +97,7 @@ do
 	end
 	if count == 0 then return false end
 end
+--]]
 
 
 local function DeserializeAndProcessMessage(msg)
@@ -206,6 +208,7 @@ else
 --
 
 -- If we are not teamLeader of an AI team, ask for a quiet death.
+--[[
 do
 	local count = 0
 	local name = gadget:GetInfo().name
@@ -218,6 +221,7 @@ do
 	end
 	if count == 0 then return false end
 end
+--]]
 
 
 --globals
