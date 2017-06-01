@@ -22,7 +22,22 @@ gadget.config = {
                 },
             },
         },
-    }
+    },
+    sun = { -- SetSunDirection seems to don't work
+        dir = {1.0, 0.4, 0.1},
+        -- Dawn
+        ambient = {0.5, 0.3, 0.15},
+        diffuse = {0.7, 0.4, 0.2},
+        specular = {0.1, 0.05, 0.025},
+        -- Day
+        -- ambient = {0.5, 0.5, 0.5},
+        -- diffuse = {0.7, 0.65, 0.65},
+        -- specular = {0.1, 0.1, 0.1},
+        -- Night
+        -- ambient = {0.2, 0.2, 0.3},
+        -- diffuse = {0.2, 0.2, 0.3},
+        -- specular = {0.0, 0.0, 0.0},
+    },
 }
 
 gadget.missions = {

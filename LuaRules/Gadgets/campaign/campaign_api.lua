@@ -192,6 +192,37 @@ function gadget:Initialize()
 	})
     --]]
 	SetupCmdChangeAIDebugVerbosity()
+    if config.sun then
+        local x, y, z
+        Log("Changing default sung values")
+        x, y, z  = gl.GetSun("pos")
+        Log("SunDir: ", x, ", ", y, ", ", z)
+        x, y, z  = gl.GetSun("ambient")
+        Log("SunAmbient: ", x, ", ", y, ", ", z)
+        x, y, z  = gl.GetSun("diffuse")
+        Log("SunDiffuse: ", x, ", ", y, ", ", z)
+        x, y, z  = gl.GetSun("specular")
+        Log("SunSpecular: ", x, ", ", y, ", ", z)
+        if config.sun.dir then
+            x, y, z = config.sun.dir[1], config.sun.dir[2], config.sun.dir[3]
+            local norm = math.sqrt(x * x + y * y + z * z)
+            x, y, z = x / norm, y / norm, z / norm
+            Spring.SetSunManualControl(true)
+            Spring.SetSunDirection(x, y, z)
+        end
+        if config.sun.ambient then
+            Spring.SetSunLighting({groundAmbientColor = config.sun.ambient})
+            Spring.SetSunLighting({unitAmbientColor = config.sun.ambient})
+        end
+        if config.sun.diffuse then
+            Spring.SetSunLighting({groundDiffuseColor = config.sun.diffuse})
+            Spring.SetSunLighting({unitDiffuseColor = config.sun.diffuse})
+        end
+        if config.sun.specular then
+            Spring.SetSunLighting({groundSpecularColor = config.sun.specular})
+            Spring.SetSunLighting({unitSpecularColor = config.sun.specular})
+        end
+    end
 end
 
 function gadget:GamePreload()
