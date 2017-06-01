@@ -22,5 +22,22 @@ gadget.config = {
                 },
             },
         },
-    }    
+    }
+}
+
+gadget.mission = {
+    [1] = {
+        events = {  -- Ensure they are sorted in time
+            [1] = {0, [[MessageToPlayer("Commander, welcome to Spring-1944!")]]}
+        }
+
+        success = {
+            condition = {"delay", 1},
+            message = "Commander, welcome to Spring-1944!",
+        },
+        fail = {
+            condition = {"teamDied", 1},
+            message = "Commander, you are out of control!",
+        }
+    }
 }

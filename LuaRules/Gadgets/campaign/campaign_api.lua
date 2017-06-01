@@ -83,6 +83,9 @@ local MY_PLAYER_ID = Spring.GetMyPlayerID()
 -- locals
 local BOT_Debug_Mode = 1 -- Must be 0 or 1
 local team = {}
+local imTheMainPlayer = false
+local mainPlayer = nil
+local allyTeamID = nil
 
 --------------------------------------------------------------------------------
 
@@ -120,6 +123,44 @@ end
 -- This is for log messages which can not be turned off (e.g. while loading.)
 function gadget.Warning(...)
 	Spring.Echo("CAMPAIGN: " .. table.concat{...})
+end
+
+local current_mission = nil
+
+function gadget.ClearCallbacks()
+end
+
+function gadget.Success()
+    ClearCallbacks()
+    Spring.SendMessageToPlayer(mainPlayer, current_mission.success.message)
+    if current_mission.finish then
+        Spring.GameOver(allyTeamID)
+    else
+        LoadMission()
+    end
+end
+
+function gadget.Fail()
+    ClearCallbacks()
+    Spring.SendMessageToPlayer(mainPlayer, current_mission.fail.message)
+    Spring.GameOver(allyTeamID)
+end
+
+function gadget.LoadMission()
+    -- Load the mission
+    if current_mission == nil then
+        current_mission = mission[1]
+        current_mission.id = 1
+    else
+        local id = current_mission.id + 1
+        current_mission = mission[id]
+        current_mission.id = id
+    end
+    -- Check if it is the last mission
+    current_mission.finish = current_mission.id == #mission
+    -- Reinit the timer and event
+    current_mission.timer = Spring.GetTimer()
+    current_mission.event_id = 1
 end
 
 --------------------------------------------------------------------------------
@@ -173,6 +214,18 @@ function gadget:GamePreload()
             end
         end
     end
+    -- Get player data
+	local myTeamID = Spring.GetMyTeamID()
+	for _,t in ipairs(Spring.GetTeamList()) do
+	    local teamID, leader, _, isAI = Spring.GetTeamInfo(t)
+        if not isAI then
+            mainPlayer = leader
+        end
+        if not isAI and teamID == myTeamID then
+            imTheMainPlayer = true
+            allyTeamID = Spring.GetMyAllyTeamID()
+	    end
+    end
 end
 
 function gadget:GameFrame(f)
@@ -185,7 +238,35 @@ function gadget:GameFrame(f)
 	if f == 1 then
 		-- This is executed AFTER headquarters / commander is spawned
 		Log("gadget:GameFrame 1")
+        -- Load the mission (just if we are the player instance)
+        if imTheMainPlayer then
+            LoadMission()
+        end
 	end
+
+    -- Launch delay based events
+    AfterDelay()
+end
+
+--------------------------------------------------------------------------------
+--
+--  Events
+--
+function gadget.MessageToPlayer(msg)
+    Spring.SendMessageToPlayer(mainPlayer, msg)
+end
+
+function gadget.AfterDelay()
+    current_mission.timer = Spring.GetTimer()
+    local delay = Spring.DiffTimers(Spring.GetTimer(), current_mission.timer)
+    -- Check if there are pending events to become executed (one per frame)
+    local event_id = current_mission.event_id
+    local event_delay = current_mission.events[event_id][1]
+    if delay >= event_delay then
+        local command = loadstring(current_mission.events[event_id][2])
+        command()
+        current_mission.event_id = event_id + 1
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -194,10 +275,12 @@ end
 --
 
 function gadget:TeamDied(teamID)
-	if team[teamID] then
-		team[teamID] = nil
-		Log("removed team ", teamID)
-	end
+	for _,c in ipairs(team_died_callbacks) do
+        if teamID == config.teams[c[2]].teamID then
+            local callback = c[1]
+            callback()
+        end
+    end    
 end
 
 --------------------------------------------------------------------------------
@@ -206,18 +289,23 @@ end
 --
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
+    Spring.Echo("UnitCreated", unitID, unitDefID, unitTeam, builderID)
 end
 
 function gadget:UnitFinished(unitID, unitDefID, unitTeam)
+    Spring.Echo("UnitFinished", unitID, unitDefID, unitTeam)
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    Spring.Echo("UnitDestroyed", unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
 end
 
 function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+    Spring.Echo("UnitTaken", unitID, unitDefID, unitTeam, newTeam)
 end
 
 function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+    Spring.Echo("UnitGiven", unitID, unitDefID, unitTeam, oldTeam)
 end
 
 -- This may be called by engine from inside Spring.GiveOrderToUnit (e.g. if unit limit is reached)
