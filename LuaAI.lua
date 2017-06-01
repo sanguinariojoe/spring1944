@@ -8,7 +8,7 @@ local bots = {
 	},
 	{
 		name = "Campaign - Chapter I",
-		desc = "Learn the infantry basics",
+		desc = "Learn the infantry basics (Map:1944_Cooper_Hill_v3)",
 	},
 }
 

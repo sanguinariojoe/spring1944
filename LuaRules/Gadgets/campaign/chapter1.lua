@@ -9,7 +9,7 @@
 function gadget:GetInfo()
 	return {
 		name = "Campaign - Chapter I",
-		desc = "Learn the infantry basics",
+		desc = "Learn the infantry basics (Map:1944_Cooper_Hill_v3)",
 		author = "Jose Luis Cercos-Pita",
 		date = "2017-05-31",
 		license = "GNU General Public License v3",

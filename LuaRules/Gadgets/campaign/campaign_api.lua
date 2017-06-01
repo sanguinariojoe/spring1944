@@ -127,37 +127,45 @@ end
 
 local current_mission = nil
 
-function gadget.ClearCallbacks()
-end
-
 function gadget.Success()
-    ClearCallbacks()
-    Spring.SendMessageToPlayer(mainPlayer, current_mission.success.message)
     if current_mission.finish then
-        Spring.GameOver(allyTeamID)
+        local allies = {}
+        for _, t in ipairs(Spring.GetTeamList()) do
+            local teamID, _, _, _, _, alliesID = Spring.GetTeamInfo(t)
+            if alliesID == allyTeamID then
+                allies[#allies + 1] = teamID
+            end
+        end
+        GameOver(allies)
+        current_mission = nil
     else
         LoadMission()
     end
 end
 
 function gadget.Fail()
-    ClearCallbacks()
-    Spring.SendMessageToPlayer(mainPlayer, current_mission.fail.message)
-    Spring.GameOver(allyTeamID)
+    local enemies = {}
+    for _, t in ipairs(Spring.GetTeamList()) do
+        local teamID, _, _, _, _, alliesID = Spring.GetTeamInfo(t)
+        if alliesID ~= allyTeamID then
+            enemies[#enemies + 1] = teamID
+        end
+    end
+    GameOver(enemies)
 end
 
 function gadget.LoadMission()
     -- Load the mission
     if current_mission == nil then
-        current_mission = mission[1]
+        current_mission = missions[1]
         current_mission.id = 1
     else
         local id = current_mission.id + 1
-        current_mission = mission[id]
+        current_mission = missions[id]
         current_mission.id = id
     end
     -- Check if it is the last mission
-    current_mission.finish = current_mission.id == #mission
+    current_mission.finish = current_mission.id == #missions
     -- Reinit the timer and event
     current_mission.timer = Spring.GetTimer()
     current_mission.event_id = 1
@@ -177,10 +185,12 @@ end
 
 function gadget:Initialize()
 	Log("gadget:Initialize")
+    --[[
 	setmetatable(gadget, {
 		__index = function() error("Attempt to read undeclared global variable", 2) end,
 		__newindex = function() error("Attempt to write undeclared global variable", 2) end,
 	})
+    --]]
 	SetupCmdChangeAIDebugVerbosity()
 end
 
@@ -235,37 +245,121 @@ function gadget:GameFrame(f)
         return
     end
 
-	if f == 1 then
-		-- This is executed AFTER headquarters / commander is spawned
-		Log("gadget:GameFrame 1")
+    if f == 1 then
+        -- This is executed AFTER headquarters / commander is spawned
+        Log("gadget:GameFrame 1")
         -- Load the mission (just if we are the player instance)
-        if imTheMainPlayer then
+        if imTheMainPlayer and current_mission == nil then
+            -- For some reason it is calling each function twice
             LoadMission()
         end
-	end
+    end
 
-    -- Launch delay based events
-    AfterDelay()
+    if imTheMainPlayer and current_mission then
+        -- Launch delay based events
+        AfterDelay()
+        -- Check triggered events
+        Triggers()
+    end
 end
 
 --------------------------------------------------------------------------------
 --
 --  Events
 --
+function gadget.DrawMarker(x, y, z, msg)
+    Spring.MarkerAddPoint(x, y, z, msg)
+end
+
+function gadget.EraseMarker(x, y, z)
+    Spring.MarkerErasePosition(x, y, z)
+end
+
+function gadget.DrawLine(x0, y0, z0, x1, y1, z1)
+    Spring.MarkerAddLine(x0, y0, z0, x1, y1, z1)
+end
+
 function gadget.MessageToPlayer(msg)
-    Spring.SendMessageToPlayer(mainPlayer, msg)
+    Spring.Echo(msg)
+end
+
+function gadget.CreateUnit(unitName, x, y, z, facing, teamID)
+    SyncedFunction("Spring.CreateUnit", {unitName, x, y, z, facing, config.teams[teamID].teamID})
 end
 
 function gadget.AfterDelay()
-    current_mission.timer = Spring.GetTimer()
-    local delay = Spring.DiffTimers(Spring.GetTimer(), current_mission.timer)
-    -- Check if there are pending events to become executed (one per frame)
     local event_id = current_mission.event_id
+    if not current_mission.events or event_id > #current_mission.events then
+        return
+    end
+    local delay = Spring.DiffTimers(Spring.GetTimer(), current_mission.timer)
     local event_delay = current_mission.events[event_id][1]
     if delay >= event_delay then
         local command = loadstring(current_mission.events[event_id][2])
         command()
         current_mission.event_id = event_id + 1
+    end
+end
+
+function EvalTrigger(trigger)
+    local command = loadstring("value = " .. trigger)
+    command()
+    return value
+end
+
+function AreUnitsInPosition(units, x, y, z, radius)
+    for _, u in ipairs(units) do
+        xu, yu, zu = Spring.GetUnitPosition(u)
+        dx, dy, dz = xu - x, yu - y, zu - z
+        if dx * dx + dz * dz > radius * radius then
+            return false
+        end
+    end
+    return true
+end
+
+function IsAreaCleared(x, y, z, radius)
+    for _, t in ipairs(Spring.GetTeamList()) do
+        local teamID, _, _, _, _, alliesID = Spring.GetTeamInfo(t)
+        if alliesID ~= allyTeamID then
+            if #Spring.GetUnitsInCylinder(x, z, radius, teamID) > 0 then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+function IsFlagCaptured(x, y, z)
+    local radius = 10
+    local units = Spring.GetUnitsInCylinder(x, z, radius, Spring.GetMyTeamID())
+    for _, u in ipairs(units) do
+        local unitDefID = Spring.GetUnitDefID(u)
+        if UnitDefs[unitDefID].name == "flag" then
+            return true
+        end
+    end
+    return false
+end
+
+function gadget.Triggers()
+    if not current_mission or not current_mission.triggers then
+        return
+    end
+    for i, t in ipairs(current_mission.triggers) do
+        -- Check if it should be triggered (LUA enforce us to store the command
+        -- result in an helper variable)
+        if EvalTrigger(t[1]) then
+            command = loadstring(t[2])
+            -- Remove the trigger if it should not be executed again
+            if current_mission and t.once then
+                table.remove(current_mission.triggers, i)
+            end
+            -- Excute the command
+            command()
+            -- Just one triggered event per frame
+            return
+        end
     end
 end
 
@@ -289,23 +383,18 @@ end
 --
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
-    Spring.Echo("UnitCreated", unitID, unitDefID, unitTeam, builderID)
 end
 
 function gadget:UnitFinished(unitID, unitDefID, unitTeam)
-    Spring.Echo("UnitFinished", unitID, unitDefID, unitTeam)
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
-    Spring.Echo("UnitDestroyed", unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
 end
 
 function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
-    Spring.Echo("UnitTaken", unitID, unitDefID, unitTeam, newTeam)
 end
 
 function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
-    Spring.Echo("UnitGiven", unitID, unitDefID, unitTeam, oldTeam)
 end
 
 -- This may be called by engine from inside Spring.GiveOrderToUnit (e.g. if unit limit is reached)

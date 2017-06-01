@@ -76,6 +76,8 @@ local numMessages = 0
 local messageQueue = {}
 --local allowedPlayers = {}
 local allowedTeams = {}
+local numCommands = 0
+local commandsQueue = {}
 
 gadget.team = allowedTeams
 
@@ -159,6 +161,16 @@ local function GameFrame(self)
 		numMessages = 0
 		messageQueue = {}
 	end
+	if (numCommands ~= 0) then
+		Log("SYNCED: GameFrame: processing ", numCommands, " commands")
+		for _,cmd in ipairs(commandsQueue) do
+			Log("SYNCED: GameFrame: executing ", cmd)
+			command = loadstring(cmd)
+			command()
+		end
+		numCommands = 0
+		commandsQueue = {}
+	end
 end
 
 
@@ -170,6 +182,10 @@ local function RecvLuaMsg(self, msg, player)
 		-- it's not allowed to call GiveOrderToUnit here
 		numMessages = numMessages + 1
 		messageQueue[numMessages] = msg
+	end
+	if (msg:byte() == 214) then
+		numCommands = numCommands + 1
+		commandsQueue[numCommands] = string.sub(msg, 2)
 	end
 end
 
@@ -276,6 +292,58 @@ function GiveOrderToUnit(unitID, cmd, params, options)
 	--Log("UNSYNCED: GiveOrderToUnit ", unitID)
 	bufferSize = bufferSize + 1
 	messageBuffer[bufferSize] = SerializeOrder(unitID, cmd, params, options)
+end
+
+function TableToString(tab)
+	local s = {"{"}
+	for i,t in ipairs(tab) do
+		if type(t) == "string" then
+			s[#s + 1] = [["]]
+			s[#s + 1] = t
+			s[#s + 1] = [["]]
+		elseif type(t) == "string" then
+			s[#s + 1] = TableToString(t)
+		else
+			s[#s + 1] = t
+		end
+		s[#s + 1] = ","
+	end
+	s[#s + 1] = "}"
+	return table.concat(s)
+end
+
+function SyncedFunction(funName, params)
+	messageBuffer[bufferSize] = string.char(214)
+	bufferSize = bufferSize + 1
+	cmd = {funName, "("}
+	for i,p in ipairs(params) do
+		if type(p) == "string" then
+			cmd[#cmd + 1] = [["]]
+			cmd[#cmd + 1] = p
+			cmd[#cmd + 1] = [["]]
+		elseif type(p) == "string" then
+			cmd[#cmd + 1] = TableToString(p)
+		else
+			cmd[#cmd + 1] = p
+		end
+		if i < #params then
+			cmd[#cmd + 1] = ","
+		end
+	end
+	cmd[#cmd + 1] = ")"
+	messageBuffer[bufferSize] = table.concat(cmd)
+end
+
+function GameOver(winners)
+	messageBuffer[bufferSize] = string.char(214)
+	bufferSize = bufferSize + 1
+	cmd = {"Spring.GameOver({"}
+	for _,w in ipairs(winners) do
+		cmd[#cmd + 1] = w
+		cmd[#cmd + 1] = ","
+	end
+	cmd[#cmd + 1] = "})"
+	messageBuffer[bufferSize] = table.concat(cmd)
 end
 
 --------------------------------------------------------------------------------
