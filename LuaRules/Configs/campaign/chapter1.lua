@@ -177,7 +177,7 @@ gadget.missions = {
             }
         }
     },
-    [1] = {
+    [5] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(2130, 299, 1300)]]},
             {0, [[EraseMarker(2190, 299, 1600)]]},
@@ -205,7 +205,7 @@ gadget.missions = {
     },
     -- Binoculars
     -- ==========
-    [2] = {
+    [6] = {
         events = {  -- Ensure they are sorted in time
             {5, [[Spring.SetCameraTarget(2260, 294, 1430, 2)]]},
             {5, [[MessageToPlayer("Among your new soldiers, you have a spotter")]]},
@@ -225,7 +225,7 @@ gadget.missions = {
             },
         },
     },
-    [3] = {
+    [7] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(2260, 294, 1430)]]},
             {0, [[MessageToPlayer("He looks transparent because he cannot be detected by the enemy forces until he gets too close")]]},
@@ -250,7 +250,7 @@ gadget.missions = {
     },
     -- Queuing commands
     -- ================
-    [4] = {
+    [8] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(3200, 0, 1450)]]},
             {1, [[MessageToPlayer("Watch out! The enemy has a tank")]]},
@@ -269,12 +269,54 @@ gadget.missions = {
              once = true
             },
             {[[#FilterUnitsByName(Spring.GetSelectedUnits(), "usbazooka") == 3]],
-             [[Success()]],
+             [[MessageToPlayer("Excellent!")
+               Success()]],
              once = true
             },
         },
     },
+    [9] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2160, 299, 1450)]]},
+            {1, [[MessageToPlayer("Alone tanks are ever a good target, because as the spotter, they are almost blind")]]},
+            {1, [[MessageToPlayer("However, a frontal attack is basically a suicide")]]},
+            {10, [[MessageToPlayer("Better we are flanking the tank, such that when the enemy is detecting you, it will has not time to orient the barrel and fire on your men")]]},
+            {20, [[DrawLine(2160, 299, 1450, 2800, 45, 1200)]]},
+            {20, [[DrawMarker(2800, 45, 1200, "Hold shift pressed, and right click here...")]]},
+            {20, [[DrawLine(2800, 45, 1200, 3200, 45, 1300)]]},
+            {20, [[DrawMarker(3200, 45, 1300, "Hold shift pressed, and right click here...")]]},
+            {20, [[DrawLine(3200, 45, 1300, 3200, 45, 1500)]]},
+            {20, [[DrawMarker(3200, 45, 1500, "Hold shift pressed, and right click here...")]]},
+            {21, [[MessageToPlayer("You can enque command by holding shift key pressed.")]]},
+        },
 
-    
-
+        triggers = {
+            {[[#FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbazooka") == 0]],
+             [[MessageToPlayer("Commander, How will you destroy the tank now?!")
+               Fail()]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["enemytankID"] then
+                   MessageToPlayer("Great work!")
+                   Success()
+               end]],
+             once = false
+            }
+        }
+    },
+    [10] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2160, 299, 1450)]]},
+            {0, [[EraseMarker(2800, 45, 1200)]]},
+            {0, [[EraseMarker(3200, 45, 1300)]]},
+            {0, [[EraseMarker(3200, 45, 1500)]]},
+            {1, [[MessageToPlayer("Now you knows the basics about the infantry")]]},
+            {10, [[MessageToPlayer("That's all for now...")]]},
+            {10, [[MessageToPlayer("We should prepare everything for an eventual attack of the enemy")]]},
+            {20, [[Success()]]},  -- Usually try to avoid using Success in an event, except if it is the last event of the chapter
+        },
+    },
 }

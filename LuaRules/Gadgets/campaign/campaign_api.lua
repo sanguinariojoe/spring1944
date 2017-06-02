@@ -135,14 +135,7 @@ local current_mission = nil
 
 function gadget.Success()
     if current_mission.finish then
-        local allies = {}
-        for _, t in ipairs(Spring.GetTeamList()) do
-            local teamID, _, _, _, _, alliesID = Spring.GetTeamInfo(t)
-            if alliesID == allyTeamID then
-                allies[#allies + 1] = teamID
-            end
-        end
-        GameOver(allies)
+        GameOver({allyTeamID})
         current_mission = nil
     else
         LoadMission()
@@ -154,10 +147,20 @@ function gadget.Fail()
     for _, t in ipairs(Spring.GetTeamList()) do
         local teamID, _, _, _, _, alliesID = Spring.GetTeamInfo(t)
         if alliesID ~= allyTeamID then
-            enemies[#enemies + 1] = teamID
+            local shouldAdd = true
+            for _, e in ipairs(enemies) do
+                if e == alliesID then
+                    shouldAdd = false
+                    break
+                end
+            end
+            if shouldAdd then
+                enemies[#enemies + 1] = alliesID
+            end
         end
     end
     GameOver(enemies)
+    current_mission = nil
 end
 
 function gadget.LoadMission()
