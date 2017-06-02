@@ -13,7 +13,7 @@ function gadget:GetInfo()
 		author = "Jose Luis Cercos-Pita",
 		date = "2017-05-31",
 		license = "GNU General Public License v3",
-  		layer = 1,
+  		layer = -1,
 		enabled = true
 	}
 end

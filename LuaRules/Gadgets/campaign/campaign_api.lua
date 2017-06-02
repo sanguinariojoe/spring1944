@@ -23,6 +23,12 @@ function gadget:GamePreload()
             end
         end
     end
+    -- Set the factions
+    for _, t in ipairs(config.teams) do
+        if t.faction then
+            SetTeamRulesParam(t.teamID, "side", t.faction, {allied=true, public=false}) -- visible to allies only, set visible to all on GameStart
+        end
+    end    
 end
 
 function gadget:GameFrame(f)
@@ -298,6 +304,8 @@ end
 --
 --  Events
 --
+
+
 function gadget.DrawMarker(x, y, z, msg)
     Spring.MarkerAddPoint(x, y, z, msg)
 end
@@ -413,23 +421,59 @@ end
 --  Unit call-ins
 --
 
+function gadget.CallIn(callInName, params)
+    if not current_mission or not current_mission.callins then
+        return
+    end
+    for i, c in ipairs(current_mission.callins) do
+        -- Check if it should be triggered
+        if callInName == c[1] then
+            command = loadstring(c[2])
+            -- Remove the trigger if it should not be executed again
+            if current_mission and c.once then
+                table.remove(current_mission.callins, i)
+            end
+            -- Excute the command
+            local locals = {}
+            for k,v in pairs(gadget) do
+                -- Shallow copy of gadget
+                locals[k] = v
+            end
+            -- Add the params
+            locals["params"] = params
+            setfenv(command, setmetatable(locals, { __index = _G })) 
+            command()
+        end
+    end    
+end
+
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
+    CallIn("UnitCreated", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, builderID=builderID})
 end
 
 function gadget:UnitFinished(unitID, unitDefID, unitTeam)
+    CallIn("UnitFinished", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
+end
+
+function gadget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    CallIn("UnitDamaged", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, damage=damage, paralyzer=paralyzer, weaponDefID=weaponDefID, projectileID=projectileID, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    CallIn("UnitDestroyed", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
 end
 
 function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+    CallIn("UnitTaken", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, newTeam=newTeam})
 end
 
 function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+    CallIn("UnitGiven", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, oldTeam=oldTeam})
 end
 
 -- This may be called by engine from inside Spring.GiveOrderToUnit (e.g. if unit limit is reached)
 function gadget:UnitIdle(unitID, unitDefID, unitTeam)
+    CallIn("UnitIdle", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
 end
 
 end
@@ -442,6 +486,7 @@ callInList = {
 	"GameFrame",
 	"TeamDied",
 	"UnitCreated",
+	"UnitDamaged",
 	"UnitFinished",
 	"UnitDestroyed",
 	"UnitTaken",

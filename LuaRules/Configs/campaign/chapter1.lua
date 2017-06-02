@@ -6,6 +6,7 @@ gadget.config = {
     teams = {
         [1] = { -- Player
             ally = 0,
+            faction = "us",
             units = { -- Leave empty to use the default ones
                 [1] = {unit = "us_platoon_rifle",
                        pos = {900, 0, 1500},
@@ -15,6 +16,7 @@ gadget.config = {
         },
         [2] = {
             ally = 1,
+            faction = "ger",
             units = { -- Leave empty to use the default ones
                 [1] = {unit = "gerpanzeriii",
                        pos = {3200, 0, 1500},
@@ -34,13 +36,15 @@ gadget.config = {
         -- diffuse = {0.7, 0.65, 0.65},
         -- specular = {0.1, 0.1, 0.1},
         -- Night
-        -- ambient = {0.2, 0.2, 0.3},
-        -- diffuse = {0.2, 0.2, 0.3},
+        -- ambient = {0.3, 0.3, 0.6},
+        -- diffuse = {0.25, 0.25, 0.5},
         -- specular = {0.0, 0.0, 0.0},
     },
 }
 
 gadget.missions = {
+    -- Learn how to select units
+    -- =========================
     [1] = {
         events = {  -- Ensure they are sorted in time
             {1, [[MessageToPlayer("Commander, welcome to Spring-1944!")]]},
@@ -71,6 +75,8 @@ gadget.missions = {
             },
         },
     },
+    -- Learn how to move units
+    -- =======================
     [2] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(833, 45, 1441)]]},
@@ -134,6 +140,8 @@ gadget.missions = {
             },
         },
     },
+    -- The fight command
+    -- =================
     [4] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(570, 45, 1820)]]},
@@ -156,6 +164,37 @@ gadget.missions = {
             {[[IsAreaCleared(2160, 299, 1450, 150)]],
              [[MessageToPlayer("Easy work!")
                Success()]],
+             once = true
+            },
+        },
+
+        callins = {
+            {"UnitDamaged",
+             [[MessageToPlayer("Contact!")
+               local x, y, z = Spring.GetUnitPosition(params.unitID)
+               Spring.SetCameraTarget(x, y, z, 2)]],
+             once = true
+            }
+        }
+    },
+    [5] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2130, 299, 1300)]]},
+            {0, [[EraseMarker(2190, 299, 1600)]]},
+            {1, [[MessageToPlayer("Probably you have noticed that soldiers under enemy fire has started crawling.")]]},
+            {1, [[MessageToPlayer("That increase their strengh, but significantly decrease their speed")]]},
+            {10, [[MessageToPlayer("You may also noticed that enemy troops were blocked by fear when our BAR machine guns started firing.")]]},
+            {10, [[MessageToPlayer("Troops under heavy fire will become suppresed, not moving or answering fire neither.")]]},
+            {20, [[MessageToPlayer("Reinforcements have arrived!")]]},
+            {20, [[CreateUnit("us_platoon_at", 2160, 299, 1450, "east", 1)]]},
+            {20, [[CreateUnit("USObserv", 2160, 299, 1450, "east", 1)]]},
+            {21, [[Success()]]},
+        },
+
+        triggers = {
+            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == 0]],
+             [[MessageToPlayer("Commander, you are out of control!")
+               Fail()]],
              once = true
             },
         },
