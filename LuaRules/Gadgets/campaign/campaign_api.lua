@@ -381,6 +381,17 @@ function IsFlagCaptured(x, y, z)
     return false
 end
 
+function FilterUnitsByName(units, unitName)
+    local filtered = {}
+    for _, u in ipairs(units) do
+        local unitDefID = Spring.GetUnitDefID(u)
+        if UnitDefs[unitDefID].name == unitName then
+            filtered[#filtered + 1] = u
+        end
+    end
+    return filtered
+end
+
 function gadget.Triggers()
     if not current_mission or not current_mission.triggers then
         return

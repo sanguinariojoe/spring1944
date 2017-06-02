@@ -177,7 +177,7 @@ gadget.missions = {
             }
         }
     },
-    [5] = {
+    [1] = {
         events = {  -- Ensure they are sorted in time
             {0, [[EraseMarker(2130, 299, 1300)]]},
             {0, [[EraseMarker(2190, 299, 1600)]]},
@@ -185,10 +185,10 @@ gadget.missions = {
             {1, [[MessageToPlayer("That increase their strengh, but significantly decrease their speed")]]},
             {10, [[MessageToPlayer("You may also noticed that enemy troops were blocked by fear when our BAR machine guns started firing.")]]},
             {10, [[MessageToPlayer("Troops under heavy fire will become suppresed, not moving or answering fire neither.")]]},
-            {20, [[MessageToPlayer("Reinforcements have arrived!")]]},
             {20, [[CreateUnit("us_platoon_at", 2160, 299, 1450, "east", 1)]]},
-            {20, [[CreateUnit("USObserv", 2160, 299, 1450, "east", 1)]]},
-            {21, [[Success()]]},
+            {20, [[CreateUnit("usobserv", 2260, 294, 1430, "east", 1)]]},
+            {21, [[MessageToPlayer("Reinforcements have arrived!")]]},
+            {22, [[_G["enemytankID"] = Spring.GetUnitsInCylinder(3200, 1500, 10)[1] ]]},
         },
 
         triggers = {
@@ -197,6 +197,84 @@ gadget.missions = {
                Fail()]],
              once = true
             },
+            {[[_G["enemytankID"] ~= nil]],
+             [[Success()]],
+             once = true
+            },
         },
     },
+    -- Binoculars
+    -- ==========
+    [2] = {
+        events = {  -- Ensure they are sorted in time
+            {5, [[Spring.SetCameraTarget(2260, 294, 1430, 2)]]},
+            {5, [[MessageToPlayer("Among your new soldiers, you have a spotter")]]},
+            {5, [[MessageToPlayer("Select him")]]},
+            {6, [[DrawMarker(2260, 294, 1430, "Left click here")]]},
+        },
+
+        triggers = {
+            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == 0]],
+             [[MessageToPlayer("Commander, you are out of control!")
+               Fail()]],
+             once = true
+            },
+            {[[#FilterUnitsByName(Spring.GetSelectedUnits(), "usobserv") == 1]],
+             [[Success()]],
+             once = true
+            },
+        },
+    },
+    [3] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2260, 294, 1430)]]},
+            {0, [[MessageToPlayer("He looks transparent because he cannot be detected by the enemy forces until he gets too close")]]},
+            {10, [[MessageToPlayer("Hence, spotter can sneak everywhere!")]]},
+            {10, [[MessageToPlayer("However, in this state spotters are almost blind, detecting enemy troops just in a very sort range.")]]},
+            {20, [[MessageToPlayer("So let's use the binoculars to spot the other side of the hill.")]]},
+            {20, [[MessageToPlayer("To do that you can use the attack command...")]]},
+            {20, [[DrawMarker(3200, 0, 1450, "Press A, then left click here")]]},
+        },
+
+        triggers = {
+            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == 0]],
+             [[MessageToPlayer("Commander, you are out of control!")
+               Fail()]],
+             once = true
+            },
+            {[[Spring.IsUnitInLos(_G["enemytankID"], Spring.GetMyAllyTeamID())]],
+             [[Success()]],
+             once = true
+            },
+        },
+    },
+    -- Queuing commands
+    -- ================
+    [4] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(3200, 0, 1450)]]},
+            {1, [[MessageToPlayer("Watch out! The enemy has a tank")]]},
+            {10, [[MessageToPlayer("The tank seems to be alone... Probably they are waiting for reinforcements")]]},
+            {10, [[MessageToPlayer("We should get that tank right now!")]]},
+            {20, [[Spring.SetCameraTarget(2160, 299, 1450, 2)]]},
+            {20, [[MessageToPlayer("Fortunatelly you have some anti-tank equiped soldiers.")]]},
+            {20, [[MessageToPlayer("You can select soldiers by its type...")]]},
+            {20, [[DrawMarker(2160, 299, 1450, "Double click over an anti-tank soldier")]]},
+        },
+
+        triggers = {
+            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == 0]],
+             [[MessageToPlayer("Commander, you are out of control!")
+               Fail()]],
+             once = true
+            },
+            {[[#FilterUnitsByName(Spring.GetSelectedUnits(), "usbazooka") == 3]],
+             [[Success()]],
+             once = true
+            },
+        },
+    },
+
+    
+
 }
