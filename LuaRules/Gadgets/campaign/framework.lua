@@ -175,17 +175,34 @@ end
 
 
 local function RecvLuaMsg(self, msg, player)
-	-- Tried to check allowedPlayers[player] too but this breaks replays, and
-	-- Spring.IsReplay() only returns true for hosted replays, not local ones.
-	if (msg:byte() == 213) then
-		Log("SYNCED: RecvLuaMsg from player ", player)
-		-- it's not allowed to call GiveOrderToUnit here
-		numMessages = numMessages + 1
-		messageQueue[numMessages] = msg
-	end
-	if (msg:byte() == 214) then
-		numCommands = numCommands + 1
-		commandsQueue[numCommands] = string.sub(msg, 2)
+	local msgpos = 1 --first byte is signature
+	local msglen = msg:len()
+
+	while (msgpos < msglen) do
+		if (msg:byte(msgpos) == 213) then
+			Log("SYNCED: RecvLuaMsg from player ", player)
+			numMessages = numMessages + 1
+			messageQueue[numMessages] = string.sub(msg, msgpos, msgpos+5)
+			msgpos = msgpos + 6
+		elseif (msg:byte(msgpos) == 214) then
+			Log("SYNCED: RecvLuaMsg from AI ", player)
+			msgpos = msgpos + 1
+			numCommands = numCommands + 1
+			-- Look for the length of the command
+			local msgend = msgpos + 1
+			while (msgend < msglen) do
+				if msg:byte(msgend) == 213 or msg:byte(msgend) == 214 then
+					msgend = msgend - 1
+					break
+				end
+				msgend = msgend + 1
+			end
+			commandsQueue[numCommands] = string.sub(msg, msgpos, msgend)
+			msgpos = msgend + 1
+		else
+			-- This message is not destinated to us
+			return
+		end
 	end
 end
 
@@ -292,6 +309,8 @@ function GiveOrderToUnit(unitID, cmd, params, options)
 	--Log("UNSYNCED: GiveOrderToUnit ", unitID)
 	bufferSize = bufferSize + 1
 	messageBuffer[bufferSize] = SerializeOrder(unitID, cmd, params, options)
+	bufferSize = bufferSize + 1
+	messageBuffer[bufferSize] = string.char(213)
 end
 
 function TableToString(tab)
@@ -313,7 +332,9 @@ function TableToString(tab)
 end
 
 function SyncedFunction(funName, params)
-	messageBuffer[bufferSize] = string.char(214)
+	if messageBuffer[bufferSize] == string.char(213) then
+		messageBuffer[bufferSize] = string.char(214)
+	end
 	bufferSize = bufferSize + 1
 	cmd = {funName, "("}
 	for i,p in ipairs(params) do
@@ -332,6 +353,8 @@ function SyncedFunction(funName, params)
 	end
 	cmd[#cmd + 1] = ")"
 	messageBuffer[bufferSize] = table.concat(cmd)
+	bufferSize = #messageBuffer + 1
+	messageBuffer[bufferSize] = string.char(213)
 end
 
 function GameOver(winners)
@@ -364,7 +387,8 @@ end
 
 local function GameFrame(self, f)
 	if (bufferSize ~= 1) then
-		Log("UNSYNCED: GameFrame: sending ", bufferSize - 1, " orders")
+		Log("UNSYNCED: GameFrame: sending ", (bufferSize - 1) / 2, " orders")
+		table.remove(messageBuffer, #messageBuffer)
 		Spring.SendLuaRulesMsg(table.concat(messageBuffer))
 		bufferSize = 1
 		messageBuffer = {string.char(213)}

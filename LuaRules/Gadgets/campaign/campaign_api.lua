@@ -26,7 +26,7 @@ function gadget:GamePreload()
     -- Set the factions
     for _, t in ipairs(config.teams) do
         if t.faction then
-            SetTeamRulesParam(t.teamID, "side", t.faction, {allied=true, public=false}) -- visible to allies only, set visible to all on GameStart
+            Spring.SetTeamRulesParam(t.teamID, "side", t.faction, {allied=true, public=false}) -- visible to allies only, set visible to all on GameStart
         end
     end    
 end
