@@ -315,13 +315,21 @@ end
 
 function TableToString(tab)
 	local s = {"{"}
-	for i,t in ipairs(tab) do
+	for k,t in pairs(tab) do
+		if type(k) == "string" then
+			s[#s + 1] = k
+			s[#s + 1] = [[ = ]]
+		end
 		if type(t) == "string" then
 			s[#s + 1] = [["]]
 			s[#s + 1] = t
 			s[#s + 1] = [["]]
-		elseif type(t) == "string" then
+		elseif type(t) == "table" then
 			s[#s + 1] = TableToString(t)
+		elseif type(t) == "boolean" and t then
+			s[#s + 1] = "true"
+		elseif type(t) == "boolean" and not t then
+			s[#s + 1] = "false"
 		else
 			s[#s + 1] = t
 		end
@@ -342,8 +350,12 @@ function SyncedFunction(funName, params)
 			cmd[#cmd + 1] = [["]]
 			cmd[#cmd + 1] = p
 			cmd[#cmd + 1] = [["]]
-		elseif type(p) == "string" then
+		elseif type(p) == "table" then
 			cmd[#cmd + 1] = TableToString(p)
+		elseif type(p) == "boolean" and p then
+			cmd[#cmd + 1] = "true"
+		elseif type(p) == "boolean" and not p then
+			cmd[#cmd + 1] = "false"
 		else
 			cmd[#cmd + 1] = p
 		end
