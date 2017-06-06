@@ -54,7 +54,10 @@ gadget.missions = {
             {0, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
             {0, [[_G["storage"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usstorage")[1] ]]},
             {0, [[for _, flag in ipairs(FilterUnitsByName(Spring.GetAllUnits(), "flag")) do
-                      SyncedFunction("Spring.TransferUnit", {flag, Spring.GetMyTeamID()})
+                      local x, y, z = Spring.GetUnitPosition(flag)
+                      if x < 2500 then
+                          SyncedFunction("Spring.TransferUnit", {flag, Spring.GetMyTeamID()})
+                      end
                   end
                 ]]},
             {1, [[MessageToPlayer("Welcome again commander!")]]},
@@ -76,5 +79,14 @@ gadget.missions = {
              once = true
             },
         },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            }
+        }
     },
 }

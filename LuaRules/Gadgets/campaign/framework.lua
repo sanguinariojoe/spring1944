@@ -358,7 +358,9 @@ function SyncedFunction(funName, params)
 end
 
 function GameOver(winners)
-	messageBuffer[bufferSize] = string.char(214)
+	if messageBuffer[bufferSize] == string.char(213) then
+		messageBuffer[bufferSize] = string.char(214)
+	end
 	bufferSize = bufferSize + 1
 	cmd = {"Spring.GameOver({"}
 	for _,w in ipairs(winners) do
@@ -367,6 +369,8 @@ function GameOver(winners)
 	end
 	cmd[#cmd + 1] = "})"
 	messageBuffer[bufferSize] = table.concat(cmd)
+	bufferSize = #messageBuffer + 1
+	messageBuffer[bufferSize] = string.char(213)
 end
 
 --------------------------------------------------------------------------------
