@@ -47,8 +47,8 @@ gadget.config = {
 }
 
 gadget.missions = {
-    -- Learn how to deploy machine guns
-    -- ================================
+    -- Machine guns
+    -- ============
     [1] = {
         events = {  -- Ensure they are sorted in time
             {0, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
@@ -129,8 +129,7 @@ gadget.missions = {
     [3] = {
         events = {  -- Ensure they are sorted in time
             -- Remove all the pending commands of the barracks (edge case)
-            {0, [[local unitDef = UnitDefNames["us_platoon_mg"]
-                  local facCmds = Spring.GetFactoryCommands(_G["barracks"])
+            {0, [[local facCmds = Spring.GetFactoryCommands(_G["barracks"])
                   local pendingUnits = false
                   if facCmds then
                       for i, cmd in ipairs(facCmds) do
@@ -234,6 +233,7 @@ gadget.missions = {
                        MessageToPlayer("Commander, aim the machine guns to the front!")
                        Fail()
                    else
+                       MessageToPlayer("Great job, commander!")
                        Success()
                    end
                end]],
@@ -250,10 +250,12 @@ gadget.missions = {
             },
         }
     },
-    -- Learn how to enque factory commands
-    -- ===================================
+    -- Building queue
+    -- ==============
     [5] = {
         events = {  -- Ensure they are sorted in time
+            {0, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
+            {0, [[_G["storage"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usstorage")[1] ]]},
             {0, [[EraseMarker(2440, 148, 410)]]},
             {0, [[EraseMarker(2795, 45, 850)]]},
             {0, [[EraseMarker(2875, 45, 5)]]},
@@ -263,8 +265,97 @@ gadget.missions = {
             {0, [[EraseMarker(2490, 188, 2135)]]},
             {0, [[EraseMarker(2875, 45, 1665)]]},
             {0, [[EraseMarker(2940, 45, 2520)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_rifle", true)]]},
+            {1, [[MessageToPlayer("Your machine guns are a good way to keep the enemy away, however, without infantry support they would be easily overruned")]]},
+            {8, [[DrawMarker(2050, 206, 150, "Select me and order 3 rifle squads")]]},
+            {8, [[MessageToPlayer("Commander, build 3 squads to support your machine guns")]]},
+            {8, [[MessageToPlayer("You can do it clicking 3 times on the squad icon")]]},
             {300, [[MessageToPlayer("We have not all the day!")
                     Fail()]]},
+        },
+        triggers = {
+            {[[Spring.GetFactoryCommands(_G["barracks"])]],
+             [[local facCmds = Spring.GetFactoryCommands(_G["barracks"])
+               local nUnits = 0
+               if facCmds then
+                   for i, cmd in ipairs(facCmds) do
+                       if cmd.id < 0 then
+                           nUnits = nUnits + 1
+                       end
+                   end
+               end
+               if nUnits >= 3 then
+                   SwitchUnitCommand(_G["barracks"], "us_platoon_rifle", false)
+                   MessageToPlayer("Excellent, commander!")
+                   Success()
+               end]],
+             once = false
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+            {"UnitFinished",
+             [[if UnitDefs[params.unitDefID].name == "us_platoon_rifle" then
+                   MessageToPlayer("What are you waiting to enqueue the other squads?")
+                   MessageToPlayer("We'll find another commander able to fulfill the orders!")
+                   Fail()
+               end]],
+             once = false
+            },
+        }
+    },
+    [6] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2050, 206, 150)]]},
+            {1, [[MessageToPlayer("You probably want to distribute your soldiers along a front line")]]},
+            {1, [[DrawLine(2600, 150, 230, 2450, 150, 425)]]},
+            {1, [[DrawLine(2330, 150, 730, 2360, 150, 980)]]},
+            {1, [[DrawLine(2415, 205, 1300, 2450, 205, 1610)]]},
+            {1, [[DrawLine(2435, 220, 1935, 2530, 220, 2270)]]},
+            {1, [[DrawLine(2580, 170, 2560, 2500, 170, 2840)]]},
+            {300, [[MessageToPlayer("We have not all the day!")
+                    Fail()]]},
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+            {"UnitFinished",
+             [[if #FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usrifle") == 8 * 3 then
+                   MessageToPlayer("Squads ready!")
+                   Success()
+               end]],
+             once = false
+            }
+        },
+    },
+    -- Mortars
+    -- =======
+    [7] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[local facCmds = Spring.GetFactoryCommands(_G["barracks"])
+                  local pendingUnits = false
+                  if facCmds then
+                      for i, cmd in ipairs(facCmds) do
+                          if cmd.id < 0 then
+                              SyncedFunction("Spring.GiveOrderToUnit", {_G["barracks"], CMD.REMOVE, {cmd.tag}, {"ctrl"}})
+                              pendingUnits = true
+                          end
+                      end
+                  end
+                  if pendingUnits then
+                      MessageToPlayer("Commander, I removed the extra squad orders")
+                  end]]},
         },
     },
 }
