@@ -47,8 +47,8 @@ gadget.config = {
 }
 
 gadget.missions = {
-    -- Learn how to select units
-    -- =========================
+    -- Learn how to deploy machine guns
+    -- ================================
     [1] = {
         events = {  -- Ensure they are sorted in time
             {0, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
@@ -60,22 +60,114 @@ gadget.missions = {
                       end
                   end
                 ]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "ushqengineer", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_rifle", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_assault", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_at", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_sniper", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_flame", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mortar", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_infgun", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "usgmctruck", false)]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "uspontoontruck", false)]]},
+            {0, [[SwitchUnitCommand(_G["storage"], "  Upgrade  ", false)]]},
             {1, [[MessageToPlayer("Welcome again commander!")]]},
             {10, [[MessageToPlayer("We have been working hard to get ready the barracks and the storage")]]},
             {10, [[Spring.SetCameraTarget(1800, 205, 135, 2)]]},
+            {10, [[MessageToPlayer("The barracks can be used to produce infantry.")]]},
+            {20, [[DrawMarker(2050, 206, 150, "Select me and order a machine gun platoon")]]},
+            {20, [[MessageToPlayer("We can start producing some machine guns to defend the hill.")]]},
             {300, [[MessageToPlayer("We have not all the day!")
                     Fail()]]},
         },
 
-        triggers = {
-            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == 0]],
-             [[MessageToPlayer("Commander, you are out of control!")
-               Fail()]],
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
              once = true
             },
-            {[[#Spring.GetTeamUnits(Spring.GetMyTeamID()) == Spring.GetSelectedUnitsCount()]],
-             [[MessageToPlayer("Well done commander")
-               Success()]],
+            {"UnitCreated",
+             [[if UnitDefs[params.unitDefID].name == "us_platoon_mg" then
+                    MessageToPlayer("Great Commander!")
+                    Success()
+               end]],
+             once = true
+            }
+        }
+    },
+    [2] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mg", false)]]},
+            {0, [[EraseMarker(2050, 206, 150)]]},
+            {0, [[MessageToPlayer("I'll tell you about the machine gunners while they are produced")]]},
+            {10, [[MessageToPlayer("Machine guns have supressing enemy infantry feature. That means that enemy soldiers under machine gun fire will be blocked by fear, not even returning fire")]]},
+            {20, [[MessageToPlayer("Machine gunners may work in 2 ways: Like the usual infantry you already known, or deploying an entrechment")]]},
+            {20, [[MessageToPlayer("The latter will block your unit movement, but in return the strengh and range will be significantly increased")]]},
+            {30, [[MessageToPlayer("Wait until your new squad is produced...")]]},
+        },
+
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+            {"UnitFinished",
+             [[if UnitDefs[params.unitDefID].name == "us_platoon_mg" then
+                   MessageToPlayer("Your new squad is ready!")
+                   Success()
+               end]],
+             once = true
+            }
+        }
+    },
+    [3] = {
+        events = {  -- Ensure they are sorted in time
+            -- Remove all the pending commands of the barracks (edge case)
+            {0, [[local unitDef = UnitDefNames["us_platoon_mg"]
+                  local facCmds = Spring.GetFactoryCommands(_G["barracks"])
+                  local pendingUnits = false
+                  if facCmds then
+                      for i, cmd in ipairs(facCmds) do
+                          if cmd.id < 0 then
+                              SyncedFunction("Spring.GiveOrderToUnit", {_G["barracks"], CMD.REMOVE, {cmd.tag}, {"ctrl"}})
+                              pendingUnits = true
+                          end
+                      end
+                  end
+                  if pendingUnits then
+                      MessageToPlayer("Commander, I removed the extra machine gun squads")
+                  end]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mg", false)]]},
+            {1, [[MessageToPlayer("We are deploying some machine gun nests to form a line along the hill")]]},
+            {10, [[DrawMarker(2440, 148, 410, "Move a machine gunner here")]]},
+            {10, [[DrawMarker(2260, 285, 1310, "Move a machine gunner here")]]},
+            {10, [[DrawMarker(2490, 188, 2135, "Move a machine gunner here")]]},
+            {10, [[MessageToPlayer("To do that, we should first ask the machine gunners to take positions")]]},
+            {300, [[MessageToPlayer("We have not all the day!")
+                    Fail()]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInCylinder(2440, 410, 20) > 0 and #Spring.GetUnitsInCylinder(2260, 1310, 20) > 0 and #Spring.GetUnitsInCylinder(2490, 2135, 20) > 0]],
+             [[local positions = {{2440, 410}, {2260, 1310}, {2490, 2135}}
+               local success = 0
+               for _, pos in ipairs(positions) do
+                   local units = Spring.GetUnitsInCylinder(pos[1], pos[2], 20)
+                   for _, unit in ipairs(units) do
+                       if UnitDefs[Spring.GetUnitDefID(unit)].name == "usmg" then
+                           success = success + 1
+                       end
+                   end
+               end
+               if success == 3 then
+                   MessageToPlayer("Excellent!")
+                   Success()
+               end]],
              once = true
             },
         },
@@ -86,7 +178,93 @@ gadget.missions = {
                    Fail()
                end]],
              once = true
-            }
+            },
         }
+    },
+    [4] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2440, 148, 410)]]},
+            {0, [[EraseMarker(2260, 285, 1310)]]},
+            {0, [[EraseMarker(2490, 188, 2135)]]},
+            {1, [[DrawLine(2440, 148, 410, 2795, 45, 850)]]},
+            {1, [[DrawLine(2440, 148, 410, 2875, 45, 5)]]},
+            {1, [[DrawLine(2260, 285, 1310, 2570, 67, 780)]]},
+            {1, [[DrawLine(2260, 285, 1310, 2705, 97, 1635)]]},
+            {1, [[DrawLine(2490, 188, 2135, 2875, 45, 1665)]]},
+            {1, [[DrawLine(2490, 188, 2135, 2940, 45, 2520)]]},
+            {1, [[DrawMarker(2440, 148, 410, "Press deploy, aim at front and left click")]]},
+            {1, [[DrawMarker(2260, 285, 1310, "Press deploy, aim at front and left click")]]},
+            {1, [[DrawMarker(2490, 188, 2135, "Press deploy, aim at front and left click")]]},
+            {1, [[MessageToPlayer("Now you can use the deploy command to make entrechments")]]},
+            {300, [[MessageToPlayer("We have not all the day!")
+                    Fail()]]},
+        },
+        triggers = {
+            {[[#FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmg_sandbag") == 3]],
+             [[MessageToPlayer("Fantastic job commander!")
+               local positions = {{2440, 410}, {2260, 1310}, {2490, 2135}}
+               local success = 0
+               local units
+               for _, pos in ipairs(positions) do
+                   units = Spring.GetUnitsInCylinder(pos[1], pos[2], 20)
+                   for _, unit in ipairs(units) do
+                       if UnitDefs[Spring.GetUnitDefID(unit)].name == "usmg_sandbag" then
+                           success = success + 1
+                       end
+                   end
+               end
+               if success ~= 3 then
+                   MessageToPlayer("Commander, deploy the machine guns at their designed positions!")
+                   Fail()
+               else
+                   -- Check the machine guns are well oriented
+                   units = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmg_sandbag")
+                   for _, unit in ipairs(units) do
+                       local _, yaw, _ = Spring.GetUnitRotation(unit)
+                       if yaw < 0.0 then
+                           yaw = yaw + 2 * math.pi
+                       end
+                       if yaw < math.rad(270 - 15) or yaw > math.rad(270 - 15) then
+                           success = success - 1
+                           -- Disabled the undeployment command
+                           SwitchUnitCommand(unit, "Deploy", false)
+                       end
+                   end
+                   if success ~= 0 then
+                       MessageToPlayer("Commander, aim the machine guns to the front!")
+                       Fail()
+                   else
+                       Success()
+                   end
+               end]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+        }
+    },
+    -- Learn how to enque factory commands
+    -- ===================================
+    [5] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2440, 148, 410)]]},
+            {0, [[EraseMarker(2795, 45, 850)]]},
+            {0, [[EraseMarker(2875, 45, 5)]]},
+            {0, [[EraseMarker(2260, 285, 1310)]]},
+            {0, [[EraseMarker(2570, 67, 780)]]},
+            {0, [[EraseMarker(2705, 97, 1635)]]},
+            {0, [[EraseMarker(2490, 188, 2135)]]},
+            {0, [[EraseMarker(2875, 45, 1665)]]},
+            {0, [[EraseMarker(2940, 45, 2520)]]},
+            {300, [[MessageToPlayer("We have not all the day!")
+                    Fail()]]},
+        },
     },
 }

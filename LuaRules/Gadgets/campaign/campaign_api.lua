@@ -329,6 +329,28 @@ function gadget.CreateUnit(unitName, x, y, z, facing, teamID)
     SyncedFunction("Spring.CreateUnit", {unitName, x, y, z, facing, config.teams[teamID].teamID})
 end
 
+function gadget.SwitchUnitCommand(unitID, cmdName, enabled)
+    local cmds = Spring.GetUnitCmdDescs(unitID)
+    for _,cmd in ipairs(cmds) do
+        if cmd.name == cmdName then
+            local cmdDescID = Spring.FindUnitCmdDesc(unitID, cmd.id)
+            SyncedFunction("Spring.EditUnitCmdDesc", {unitID, cmdDescID, {disabled = not enabled}})
+            break
+        end
+    end
+end
+
+function gadget.GetUnitCmdDesc(unitID, cmdID)
+    -- Notice the difference with Spring.GetUnitCmdDescs
+    local cmds = Spring.GetUnitCmdDescs(unitID)
+    for _,cmd in ipairs(cmds) do
+        if cmd.id == cmdID then
+            return cmd
+        end
+    end
+    return nil
+end
+
 function gadget.AfterDelay()
     local event_id = current_mission.event_id
     if not current_mission.events or event_id > #current_mission.events then
