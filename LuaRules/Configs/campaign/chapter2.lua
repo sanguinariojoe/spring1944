@@ -95,8 +95,8 @@ gadget.missions = {
                     Success()
                end]],
              once = true
-            }
-        }
+            },
+        },
     },
     [2] = {
         events = {  -- Ensure they are sorted in time
@@ -123,8 +123,8 @@ gadget.missions = {
                    Success()
                end]],
              once = true
-            }
-        }
+            },
+        },
     },
     [3] = {
         events = {  -- Ensure they are sorted in time
@@ -152,6 +152,11 @@ gadget.missions = {
                     Fail()]]},
         },
         triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
             {[[#Spring.GetUnitsInCylinder(2440, 410, 20) > 0 and #Spring.GetUnitsInCylinder(2260, 1310, 20) > 0 and #Spring.GetUnitsInCylinder(2490, 2135, 20) > 0]],
              [[local positions = {{2440, 410}, {2260, 1310}, {2490, 2135}}
                local success = 0
@@ -178,7 +183,7 @@ gadget.missions = {
                end]],
              once = true
             },
-        }
+        },
     },
     [4] = {
         events = {  -- Ensure they are sorted in time
@@ -199,6 +204,11 @@ gadget.missions = {
                     Fail()]]},
         },
         triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
             {[[#FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmg_sandbag") == 3]],
              [[MessageToPlayer("Fantastic job commander!")
                local positions = {{2440, 410}, {2260, 1310}, {2490, 2135}}
@@ -248,7 +258,7 @@ gadget.missions = {
                end]],
              once = true
             },
-        }
+        },
     },
     -- Building queue
     -- ==============
@@ -274,6 +284,11 @@ gadget.missions = {
                     Fail()]]},
         },
         triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
             {[[Spring.GetFactoryCommands(_G["barracks"])]],
              [[local facCmds = Spring.GetFactoryCommands(_G["barracks"])
                local nUnits = 0
@@ -308,7 +323,7 @@ gadget.missions = {
                end]],
              once = false
             },
-        }
+        },
     },
     [6] = {
         events = {  -- Ensure they are sorted in time
@@ -321,6 +336,13 @@ gadget.missions = {
             {1, [[DrawLine(2580, 170, 2560, 2500, 170, 2840)]]},
             {300, [[MessageToPlayer("We have not all the day!")
                     Fail()]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
         },
         callins = {
             {"UnitDestroyed",
@@ -336,7 +358,7 @@ gadget.missions = {
                    Success()
                end]],
              once = false
-            }
+            },
         },
     },
     -- Mortars
@@ -356,6 +378,113 @@ gadget.missions = {
                   if pendingUnits then
                       MessageToPlayer("Commander, I removed the extra squad orders")
                   end]]},
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mortar", true)]]},
+            {1, [[MessageToPlayer("Dammit! It seems that the enemy is not actually interested in this godforsaken hill")]]},
+            {1, [[MessageToPlayer("Meanwhile we are making some shooting practices with the mortar")]]},
+            {10, [[DrawMarker(2050, 206, 150, "Select me and order a mortars squads")]]},
+            {10, [[MessageToPlayer("Commander, build a mortars squad")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+            {"UnitCreated",
+             [[if UnitDefs[params.unitDefID].name == "us_platoon_mortar" then
+                    MessageToPlayer("Well done Commander!")
+                    Success()
+               end]],
+             once = true
+            },
+        },
+    },
+    [8] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mortar", false)]]},
+            {0, [[EraseMarker(2050, 206, 150)]]},
+            {0, [[MessageToPlayer("Mortars could become a critical unit during infantry battles")]]},
+            {10, [[MessageToPlayer("Their indirect fire and relatively long range allows them to shoot from a safe position")]]},
+            {20, [[MessageToPlayer("Also the explosive loads are deadly to units close to the hit point, and scaring enough to stop the advance of large groups of units")]]},
+            {30, [[MessageToPlayer("However, they are not prepared for direct confrontations, so keep themaway from enemy fire")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+            {"UnitFinished",
+             [[if UnitDefs[params.unitDefID].name == "us_platoon_mortars" then
+                   MessageToPlayer("Your new squad is ready!")
+                   Success()
+               end]],
+             once = true
+            }
+        },
+    },
+    [9] = {
+        events = {  -- Ensure they are sorted in time
+            -- Remove all the pending commands of the barracks (edge case)
+            {0, [[local facCmds = Spring.GetFactoryCommands(_G["barracks"])
+                  local pendingUnits = false
+                  if facCmds then
+                      for i, cmd in ipairs(facCmds) do
+                          if cmd.id < 0 then
+                              SyncedFunction("Spring.GiveOrderToUnit", {_G["barracks"], CMD.REMOVE, {cmd.tag}, {"ctrl"}})
+                              pendingUnits = true
+                          end
+                      end
+                  end
+                  if pendingUnits then
+                      MessageToPlayer("Commander, I removed the extra squads")
+                  end]]},
+            {0, [[DrawMarker(2260, 285, 1310, "Move a mortar here")]]},
+            {0, [[MessageToPlayer("Well, select a mortar unit and move it to the mark to start the practices...")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
+            {[[#Spring.GetUnitsInCylinder(2260, 1310, 20) > 0]],
+             [[local units = Spring.GetUnitsInCylinder(2260, 1310, 20)
+               for _, unit in ipairs(units) do
+                   if UnitDefs[Spring.GetUnitDefID(unit)].name == "usmortar" then
+                       MessageToPlayer("Excellent!")
+                       Success()
+                   end
+               end]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
         },
     },
 }
