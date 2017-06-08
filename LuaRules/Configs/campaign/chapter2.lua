@@ -457,7 +457,7 @@ gadget.missions = {
                   if pendingUnits then
                       MessageToPlayer("Commander, I removed the extra squads")
                   end]]},
-            {0, [[DrawMarker(2260, 285, 1310, "Move a mortar here")]]},
+            {0, [[DrawMarker(2190, 299, 1460, "Move a mortar here")]]},
             {0, [[MessageToPlayer("Well, select a mortar unit and move it to the mark to start the practices...")]]},
         },
         triggers = {
@@ -466,14 +466,36 @@ gadget.missions = {
                Fail()]],
              once = true
             },
-            {[[#Spring.GetUnitsInCylinder(2260, 1310, 20) > 0]],
-             [[local units = Spring.GetUnitsInCylinder(2260, 1310, 20)
+            {[[#Spring.GetUnitsInCylinder(2190, 1460, 20) > 0]],
+             [[local units = Spring.GetUnitsInCylinder(2190, 1460, 20)
                for _, unit in ipairs(units) do
                    if UnitDefs[Spring.GetUnitDefID(unit)].name == "usmortar" then
                        MessageToPlayer("Excellent!")
                        Success()
                    end
                end]],
+             once = true
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+        },
+    },
+    [10] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[DrawMarker(3000, 45, 1450, "Press A, then left click here")]]},
+            {0, [[MessageToPlayer("Now let's shooting a couple of rounds...")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
              once = true
             },
         },
