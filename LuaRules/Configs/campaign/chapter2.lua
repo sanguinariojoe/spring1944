@@ -122,7 +122,7 @@ gadget.missions = {
                    MessageToPlayer("Your new squad is ready!")
                    Success()
                end]],
-             once = true
+             once = false
             },
         },
     },
@@ -143,6 +143,11 @@ gadget.missions = {
                       MessageToPlayer("Commander, I removed the extra machine gun squads")
                   end]]},
             {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mg", false)]]},
+            -- Avoid the units deploy
+            {1, [[units = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmg")
+                  for _, unit in ipairs(units) do
+                      SwitchUnitCommand(unit, "Deploy", false)
+                   end]]},
             {1, [[MessageToPlayer("We are deploying some machine gun nests to form a line along the hill")]]},
             {10, [[DrawMarker(2440, 148, 410, "Move a machine gunner here")]]},
             {10, [[DrawMarker(2260, 285, 1310, "Move a machine gunner here")]]},
@@ -187,6 +192,11 @@ gadget.missions = {
     },
     [4] = {
         events = {  -- Ensure they are sorted in time
+            -- Let again the units deploy
+            {1, [[units = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmg")
+                  for _, unit in ipairs(units) do
+                      SwitchUnitCommand(unit, "Deploy", true)
+                   end]]},
             {0, [[EraseMarker(2440, 148, 410)]]},
             {0, [[EraseMarker(2260, 285, 1310)]]},
             {0, [[EraseMarker(2490, 188, 2135)]]},
@@ -404,7 +414,7 @@ gadget.missions = {
                     MessageToPlayer("Well done Commander!")
                     Success()
                end]],
-             once = true
+             once = false
             },
         },
     },
@@ -415,7 +425,7 @@ gadget.missions = {
             {0, [[MessageToPlayer("Mortars could become a critical unit during infantry battles")]]},
             {10, [[MessageToPlayer("Their indirect fire and relatively long range allows them to shoot from a safe position")]]},
             {20, [[MessageToPlayer("Also the explosive loads are deadly to units close to the hit point, and scaring enough to stop the advance of large groups of units")]]},
-            {30, [[MessageToPlayer("However, they are not prepared for direct confrontations, so keep themaway from enemy fire")]]},
+            {30, [[MessageToPlayer("However, they are not prepared for direct confrontations, so keep them away from enemy fire")]]},
         },
         triggers = {
             {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
@@ -433,11 +443,11 @@ gadget.missions = {
              once = true
             },
             {"UnitFinished",
-             [[if UnitDefs[params.unitDefID].name == "us_platoon_mortars" then
+             [[if UnitDefs[params.unitDefID].name == "usmortar" then
                    MessageToPlayer("Your new squad is ready!")
                    Success()
                end]],
-             once = true
+             once = false
             }
         },
     },
@@ -459,6 +469,12 @@ gadget.missions = {
                   end]]},
             {0, [[DrawMarker(2190, 299, 1460, "Move a mortar here")]]},
             {0, [[MessageToPlayer("Well, select a mortar unit and move it to the mark to start the practices...")]]},
+            -- Let's start the mortars with the maximum ammo
+            {1, [[for _,u in ipairs(FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmortar")) do
+                      -- Get the ammo parameters
+                      local maxammo = UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo
+                      SyncedFunction("Spring.SetUnitRulesParam", {u, 'ammo', maxammo})
+                  end]]},
         },
         triggers = {
             {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
@@ -479,7 +495,7 @@ gadget.missions = {
         },
         callins = {
             {"UnitDestroyed",
-             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] then
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] or params.unitID == _G["usmortar"] then
                    MessageToPlayer("Commander, you are relegated!")
                    Fail()
                end]],
@@ -489,8 +505,103 @@ gadget.missions = {
     },
     [10] = {
         events = {  -- Ensure they are sorted in time
-            {0, [[DrawMarker(3000, 45, 1450, "Press A, then left click here")]]},
-            {0, [[MessageToPlayer("Now let's shooting a couple of rounds...")]]},
+            {0, [[EraseMarker(2190, 299, 1460)]]},
+            {0, [[_G["ammo_reported"] = false]]},
+            {1, [[DrawMarker(3000, 45, 1450, "Press A, then left click here")]]},
+            {1, [[MessageToPlayer("Now let's shooting a couple of rounds...")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
+            {[[not _G["ammo_reported"]]],
+             [[for _,u in ipairs(FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmortar")) do
+                   -- Get the ammo parameters
+                   local maxammo = math.floor(UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo)
+                   local ammo = math.floor(Spring.GetUnitRulesParam(u, 'ammo'))
+                   if ammo < maxammo then
+                       EraseMarker(3000, 45, 1450)
+                       Spring.SetCameraTarget(2190, 299, 1460, 2)
+                       MessageToPlayer("Take a look, the unit is consuming its ammo (yellow bar)")
+                       _G["ammo_reported"] = true
+                   end
+               end]],
+             once = false
+            },
+            -- The following is executed every single frame
+            {[[true]],
+             [[for _,u in ipairs(FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmortar")) do
+                   -- Get the ammo parameters
+                   local maxammo = math.floor(UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo)
+                   local ammo = math.floor(Spring.GetUnitRulesParam(u, 'ammo'))
+                   if ammo == 0 then
+                       MessageToPlayer("You are out of ammo...")
+                       Success()
+                   end
+               end]],
+             once = false
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] or params.unitID == _G["usmortar"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+        },
+    },
+    [11] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[MessageToPlayer("To replenish your unit ammo, you must move it to a supply area")]]},
+            {10, [[Spring.SetCameraTarget(2050, 206, 150, 2)]]},
+            {10, [[DrawMarker(2050, 206, 150, "Place the cursor over me...")]]},
+            {10, [[MessageToPlayer("You can check the supply area just simply putting your mouse over a building")]]},
+            {10, [[MessageToPlayer("It is shown as a yellow dashed line")]]},
+            {20, [[MessageToPlayer("Move your mortar soldier into the supply area to replenish his ammo")]]},
+        },
+        triggers = {
+            {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
+             [[MessageToPlayer("Desertions will not be tolerated!")
+               Fail()]],
+             once = true
+            },
+            -- The following is executed every single frame
+            {[[true]],
+             [[local failed = false
+               for _,u in ipairs(FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmortar")) do
+                   -- Get the ammo parameters
+                   local maxammo = math.floor(UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo)
+                   local ammo = math.floor(Spring.GetUnitRulesParam(u, 'ammo'))
+                   if ammo < maxammo then
+                       failed = true
+                   end
+               end
+               if not failed then
+                   MessageToPlayer("Well done commander!")
+                   Success()
+               end]],
+             once = false
+            },
+        },
+        callins = {
+            {"UnitDestroyed",
+             [[if params.unitID == _G["barracks"] or params.unitID == _G["storage"] or params.unitID == _G["usmortar"] then
+                   MessageToPlayer("Commander, you are relegated!")
+                   Fail()
+               end]],
+             once = true
+            },
+        },
+    },
+    -- Let's fight against the AI
+    -- ==========================
+    [12] = {
+        events = {  -- Ensure they are sorted in time
+            {0, [[EraseMarker(2050, 206, 150)]]},
         },
         triggers = {
             {[[#Spring.GetUnitsInRectangle(3000, 0, 4096, 4096, Spring.GetMyTeamID()) > 0]],
