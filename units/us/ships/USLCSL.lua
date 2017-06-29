@@ -36,6 +36,7 @@ local US_LCSL = ArmedBoat:New{
 		smokeduration		=	40,
 		smokecooldown		=	30,
 		smokeceg		=	"SMOKESHELL_Medium",
+
 	},
 }
 
@@ -82,6 +83,7 @@ local US_LCSL_Turret_TwinBofors_Front = OpenBoatTurret:New{
 		turretturnspeed			= 30,
 		elevationspeed			= 30,
 		aaweapon				= 1,
+
     },
 }
 
@@ -102,6 +104,7 @@ local US_LCSL_Turret_TwinBofors_Rear = US_LCSL_Turret_TwinBofors_Front:New{
 	},
 	customparams = {
 		facing 					= 2,
+
 	},
 }
 
@@ -122,6 +125,7 @@ local US_SC_Turret_76mm = OpenBoatTurret:New{
 		barrelrecoilspeed		= 10,
 		turretturnspeed			= 15,
 		elevationspeed			= 15,
+
     },
 }
 

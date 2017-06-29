@@ -13,6 +13,7 @@ local ITA_Barracks = Barracks:New{
 									cccccc 
 									cccccc 
 									cccccc]],
+
 }
 
 local ITA_BarracksElite = ITA_Barracks:New{

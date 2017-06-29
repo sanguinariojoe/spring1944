@@ -13,6 +13,9 @@ local JPN_Barracks = Barracks:New{
 									cccccc 
 									cccccc 
 									cccccc]],
+	customParams = {
+
+	},
 }
 
 local JPN_Tent = Barracks:New{

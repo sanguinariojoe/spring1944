@@ -54,6 +54,9 @@ local HUN_FortifiedStorage = Storage:New(Bunker):New{
 			maxAngleDif			= 90,
 		},
 	},
+	customParams = {
+
+	},
 }
 
 if HUN_FortifiedStorage.customparams then

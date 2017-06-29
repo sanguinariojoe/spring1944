@@ -14,7 +14,6 @@ local GER_SBoot = ArmedBoat:New{
 	weapons = {
 		[1] = {
 			name				= "flak3820mmhe",
-			maxAngleDif			= 30,
 			onlyTargetCategory	= "BUILDING INFANTRY SOFTVEH OPENVEH HARDVEH SHIP LARGESHIP DEPLOYED",
 		},
 	},
@@ -32,6 +31,7 @@ local GER_SBoot = ArmedBoat:New{
 		smokeduration		=	40,
 		smokecooldown		=	30,
 		smokeceg		=	"SMOKESHELL_Medium",
+
 	},
 }
 
@@ -42,11 +42,11 @@ local GER_SBoot_Turret_20mm_Front = OpenBoatTurret:New{
   	weapons = {	
 		[1] = {
 			name				= "flak3820mmaa",
-			maxAngleDif			= 30,
+			maxAngleDif			= 300,
 		},
 		[2] = {
 			name				= "flak3820mmhe",
-			maxAngleDif			= 30,
+			maxAngleDif			= 300,
 		},
 	},
 	customparams = {
@@ -57,23 +57,25 @@ local GER_SBoot_Turret_20mm_Front = OpenBoatTurret:New{
 		turretturnspeed			= 90,
 		elevationspeed			= 80,
 		aaweapon				= 1,
+
     },
 }
 
 local GER_SBoot_Turret_20mm_Rear = GER_SBoot_Turret_20mm_Front:New{
   	weapons = {	
 		[1] = {
-			maxAngleDif			= 330,
+			maxAngleDif			= 300,
 			mainDir		= [[0 0 -1]],
 		},
 		[2] = {
 			name				= "flak3820mmhe",
-			maxAngleDif			= 330,
+			maxAngleDif			= 300,
 			mainDir		= [[0 0 -1]],
 		},
 	},
 	customparams = {
 		facing					= 2,
+
     },
 }
 return lowerkeys({
