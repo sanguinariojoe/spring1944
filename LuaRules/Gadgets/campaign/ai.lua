@@ -23,12 +23,58 @@ ai = {
     -- List of all the leaders, and their squads
     leaders = {}
     -- Leader to become updated
-    leader_index = 1
-    -- List of targets, and their priority
+    leader = nil
+    -- List of targets per leader. see campaign/ai_targets.lua
     targets = {}
 }
 
+include("LuaRules/Gadgets/campaign/ai_targets.lua")
 
+-- Callins
+-- =======
+function ai.UnitCreated(unitID, unitDefID, unitTeam, builderID)
+    ai.AddTargeteable(unitID)
+end
+
+function ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    -- Remove the AI control
+    ai.RemoveUnit(unitID)
+    -- And ask the leaders to forget this target
+    ai.RemoveTargeteable(unitID)
+end
+
+function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
+    CallIn("UnitCreated", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, builderID=builderID})
+end
+
+function gadget:UnitFinished(unitID, unitDefID, unitTeam)
+    CallIn("UnitFinished", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
+end
+
+function gadget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
+    CallIn("UnitDamaged", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, damage=damage, paralyzer=paralyzer, weaponDefID=weaponDefID, projectileID=projectileID, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
+end
+
+function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    CallIn("UnitDestroyed", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
+end
+
+function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+    CallIn("UnitTaken", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, newTeam=newTeam})
+end
+
+function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+    CallIn("UnitGiven", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, oldTeam=oldTeam})
+end
+
+-- This may be called by engine from inside Spring.GiveOrderToUnit (e.g. if unit limit is reached)
+function gadget:UnitIdle(unitID, unitDefID, unitTeam)
+    CallIn("UnitIdle", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
+end
+
+        
+-- Callouts
+-- ========
 function ai.RelevateLeader(unitID)
     if leaders[unitID] ~= nil then
         return
@@ -41,6 +87,7 @@ function ai.RelevateLeader(unitID)
         leaders[l] = squad
     end
     leaders[unitID] = nil
+    targets[unitID] = nil
 end
 
 function ai.RemoveUnit(unitID)
@@ -94,3 +141,16 @@ function ai.AddUnit(unitID)
     table.insert(leaders[unit_leader], unitID)
 end
 
+function _UpdateSquad(leader, squad)
+    -- Check if it has already a target, and if he is currently carring out the
+    -- task
+    
+end
+
+function ai.Update()
+    if next(leaders, leader_index) == nil then
+        return
+    end
+    leader, squad = next(leaders, leader)
+    _UpdateSquad(leader, squad)
+end

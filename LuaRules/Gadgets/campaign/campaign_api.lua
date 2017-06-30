@@ -1,5 +1,5 @@
+include("LuaRules/Gadgets/campaign/ai.lua")
 local error_msg = nil
-
 
 if (gadgetHandler:IsSyncedCode()) then
 
