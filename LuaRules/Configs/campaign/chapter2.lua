@@ -516,7 +516,7 @@ gadget.missions = {
                Fail()]],
              once = true
             },
-            {[[not _G["ammo_reported"]]],
+            {[[not _G["ammo_reported"] ]],
              [[for _,u in ipairs(FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usmortar")) do
                    -- Get the ammo parameters
                    local maxammo = math.floor(UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo)
