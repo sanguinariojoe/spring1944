@@ -33,46 +33,24 @@ include("LuaRules/Gadgets/campaign/ai_targets.lua")
 -- Callins
 -- =======
 function ai.UnitCreated(unitID, unitDefID, unitTeam, builderID)
-    ai.AddTargeteable(unitID)
+    AddTargeteable(unitID)
 end
 
 function ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
     -- Remove the AI control
-    ai.RemoveUnit(unitID)
+    RemoveUnit(unitID)
     -- And ask the leaders to forget this target
-    ai.RemoveTargeteable(unitID)
+    RemoveTargeteable(unitID)
 end
 
-function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
-    CallIn("UnitCreated", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, builderID=builderID})
+function ai.UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+    -- When a unit is given, the AI should forget it. Otherwise, the unit would
+    -- remain controlled even if it is given to a human controlled team.
+    -- Hence, the campaign developer is responsible of eventually reassigning
+    -- the unit to the AI
+    UnitDestroyed(unitID, unitDefID, unitTeam, nil, nil, nil)
 end
 
-function gadget:UnitFinished(unitID, unitDefID, unitTeam)
-    CallIn("UnitFinished", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
-end
-
-function gadget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
-    CallIn("UnitDamaged", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, damage=damage, paralyzer=paralyzer, weaponDefID=weaponDefID, projectileID=projectileID, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
-end
-
-function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
-    CallIn("UnitDestroyed", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, attackerID=attackerID, attackerDefID=attackerDefID, attackerTeam=attackerTeam})
-end
-
-function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
-    CallIn("UnitTaken", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, newTeam=newTeam})
-end
-
-function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
-    CallIn("UnitGiven", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam, oldTeam=oldTeam})
-end
-
--- This may be called by engine from inside Spring.GiveOrderToUnit (e.g. if unit limit is reached)
-function gadget:UnitIdle(unitID, unitDefID, unitTeam)
-    CallIn("UnitIdle", {unitID=unitID, unitDefID=unitDefID, unitTeam=unitTeam})
-end
-
-        
 -- Callouts
 -- ========
 function ai.RelevateLeader(unitID)

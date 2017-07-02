@@ -72,6 +72,18 @@ function gadget:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z)
 	return true
 end
 
+function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
+    ai.UnitCreated(unitID, unitDefID, unitTeam, builderID)
+end
+
+function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+end
+
+function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+    ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+end
+
 else
 
 --------------------------------------------------------------------------------
