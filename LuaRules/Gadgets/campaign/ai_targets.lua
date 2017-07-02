@@ -6,20 +6,20 @@
 local _flags = nil
 local _targeteables = {}
 local _targeteable_names = {
-    "flag" = 0.5,
-    "buoy" = 0.5,
-    "*barracks*" = 1.0,
-    "*tankyard*" = 2.0,
-    "*yard*" = 1.0,
-    "*engineer*" = 2.0,
-    "*engvehicle*" = 4.0,
-    "*hq*" = 1.5,
+    ["flag"] = 0.5,
+    ["buoy"] = 0.5,
+    ["*barracks*"] = 1.0,
+    ["*tankyard*"] = 2.0,
+    ["*yard*"] = 1.0,
+    ["*engineer*"] = 2.0,
+    ["*engvehicle*"] = 4.0,
+    ["*hq*"] = 1.5,
 }
 
 function ai.AddTargeteable(unitID)
     local uname = UnitDefs[Spring.GetUnitDefID(unitID)].name
     for tname,tval in ipairs(_targeteable_names) do
-        if name = string.match(uname, tname) then
+        if name == string.match(uname, tname) then
             _targeteables[unitID] = tval
             break
         end
@@ -39,7 +39,7 @@ function ai.AssignTarget(unitID)
     -- This function is computing a new target, just in case a target has not
     -- been selected yet. It is not overwriting targets, to do that, please
     -- call before to GiveUpTarget
-    if leaders[unitID] == nil or targets[unitID] ~= nil then
+    if ai.leaders[unitID] == nil or ai.targets[unitID] ~= nil then
         return
     end
 
@@ -66,7 +66,7 @@ function ai.AssignTarget(unitID)
                 local tscore = p / d
             end
             if tscore > score then
-                targets[unitID] = t
+                ai.targets[unitID] = t
                 score = tscore
             end
         end
@@ -74,15 +74,15 @@ function ai.AssignTarget(unitID)
 end
 
 function ai.UpdateTarget(unitID)
-    if leaders[unitID] == nil then
-        if targets[unitID] ~= nil then
+    if ai.leaders[unitID] == nil then
+        if ai.targets[unitID] ~= nil then
             -- He is not a leader, so why a target?
-            targets[unitID] = nil
+            ai.targets[unitID] = nil
         end
         return
     end
     -- Check the target
-    local target = targets[unitID]
+    local target = ai.targets[unitID]
     if not Spring.ValidUnitID(target) or Spring.GetUnitIsDead(target) then
         ai.GiveUpTarget(unitID)
     end

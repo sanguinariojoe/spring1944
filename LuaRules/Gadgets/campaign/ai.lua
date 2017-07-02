@@ -19,13 +19,13 @@ local MAX_SQUAD_SIZE = 15
 ai = {
     -- List of all the units managed by the ai, and their leader (leaders are
     -- included, and reference to themselves)
-    units = {}
+    units = {},
     -- List of all the leaders, and their squads
-    leaders = {}
+    leaders = {},
     -- Leader to become updated
-    leader = nil
+    leader = nil,
     -- List of targets per leader. see campaign/ai_targets.lua
-    targets = {}
+    targets = {},
 }
 
 include("LuaRules/Gadgets/campaign/ai_targets.lua")
@@ -33,14 +33,14 @@ include("LuaRules/Gadgets/campaign/ai_targets.lua")
 -- Callins
 -- =======
 function ai.UnitCreated(unitID, unitDefID, unitTeam, builderID)
-    AddTargeteable(unitID)
+    ai.AddTargeteable(unitID)
 end
 
 function ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
     -- Remove the AI control
-    RemoveUnit(unitID)
+    ai.RemoveUnit(unitID)
     -- And ask the leaders to forget this target
-    RemoveTargeteable(unitID)
+    ai.RemoveTargeteable(unitID)
 end
 
 function ai.UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
@@ -48,32 +48,32 @@ function ai.UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
     -- remain controlled even if it is given to a human controlled team.
     -- Hence, the campaign developer is responsible of eventually reassigning
     -- the unit to the AI
-    UnitDestroyed(unitID, unitDefID, unitTeam, nil, nil, nil)
+    ai.UnitDestroyed(unitID, unitDefID, unitTeam, nil, nil, nil)
 end
 
 -- Callouts
 -- ========
 function ai.RelevateLeader(unitID)
-    if leaders[unitID] ~= nil then
+    if ai.leaders[unitID] == nil then
         return
     end
 
-    if #leaders[unitID] > 0 then
-        local squad = leaders[unitID]
-        local l = squad[i]
-        table.remove(squad, 1)
-        leaders[l] = squad
+    if #ai.leaders[unitID] > 0 then
+        local squad = ai.leaders[unitID]
+        local l = ai.squad[i]
+        table.remove(ai.squad, 1)
+        ai.leaders[l] = ai.squad
     end
-    leaders[unitID] = nil
-    targets[unitID] = nil
+    ai.leaders[unitID] = nil
+    ai.targets[unitID] = nil
 end
 
 function ai.RemoveUnit(unitID)
     -- Eventually relevate him as leader
-    RelevateLeader(unitID)
+    ai.RelevateLeader(unitID)
     -- And remove the unit for the handled ones
-    if units[unitID] then
-        units[unitID] = nil
+    if ai.units[unitID] then
+        ai.units[unitID] = nil
     end
 end
 
@@ -88,7 +88,7 @@ function ai._GetBestLeader(unitID)
     l_unit = nil
     l_score = 0.0
     for _,l in ipairs(leader_candidates) do
-        if leaders[l] ~= nil and #leaders[l] < MAX_SQUAD_SIZE then
+        if ai.leaders[l] ~= nil and #ai.leaders[l] < MAX_SQUAD_SIZE then
             local lx, ly, lz = Spring.GetUnitPosition(l)
             local dx, dy, dz = x - lx, y - ly, z - lz
             local score = 1.0 / (dx * dx + dy * dy + dz * dz)
@@ -107,11 +107,11 @@ function ai.AddUnit(unitID)
     end
 
     -- Assign the unit to an squad, or create a new one
-    local unit_leader = _GetBestLeader(unitID)
+    local unit_leader = ai._GetBestLeader(unitID)
     if unit_leader == nil then
         -- The unit should become a leader
-        leaders[unitID] = {}
-        units[unitID] = unitID
+        ai.leaders[unitID] = {}
+        ai.units[unitID] = unitID
         return        
     end
 
@@ -119,16 +119,18 @@ function ai.AddUnit(unitID)
     table.insert(leaders[unit_leader], unitID)
 end
 
-function _UpdateSquad(leader, squad)
+function ai._UpdateSquad(leader, squad)
     -- Check if it has already a target
     ai.UpdateTarget(leader)
-    
+    -- Advance to the target in formation
+    -- {id = CMD.FIGHT,tag = 7,options = {alt = false,ctrl = true,internal = false,coded = 64,right = false,meta = false,shift = false,},params = {1321.21387,45.1745605,1144.25256,},}
+    -- {id = CMD.SET_WANTED_MAX_SPEED,tag = 8,options = {alt = false,ctrl = true,internal = false,coded = 64,right = false,meta = false,shift = false,},params = {0.80000001,},}
 end
 
 function ai.Update()
-    if next(leaders, leader_index) == nil then
+    if next(ai.leaders, ai.leader) == nil then
         return
     end
-    leader, squad = next(leaders, leader)
-    _UpdateSquad(leader, squad)
+    local leader, squad = next(ai.leaders, ai.leader)
+    ai._UpdateSquad(leader, squad)
 end
