@@ -12,7 +12,7 @@ local _targeteable_names = {
     "*tankyard*" = 2.0,
     "*yard*" = 1.0,
     "*engineer*" = 2.0,
-    "*engvehicle*" = 3.0,
+    "*engvehicle*" = 4.0,
     "*hq*" = 1.5,
 }
 
@@ -45,19 +45,47 @@ function ai.AssignTarget(unitID)
 
     -- Parse the list of potential targets. The targets would be classified
     -- depending on their priority and distance
-    
+    local score = 0.0
+    local allyID = Spring.GetUnitAllyTeam(unitID)
+    local x, y, z = Spring.GetUnitPosition(t)
+    local unitDefID = Spring.GetUnitDefID(u)
+    for t,p in pairs(_targeteables) do
+        -- Check if we may reach the target. To do so, we obviously should avoid
+        -- testing for blocking objects
+        local tx, ty, tz = Spring.GetUnitPosition(t)
+        if Spring.TestMoveOrder(unitDefID, x, y, z, tx, ty, tz, true, false, true) then
+            local dx, dy, dz = tx - x, ty - y, tz - z
+            local d2 = dx * dx + dz * dz
+            local d = math.sqrt(d2)
+            local tscore
+            if allyID == Spring.GetUnitAllyTeam(t) then
+                -- Ally unit, should we defend him?
+                tscore = 0.0
+            else
+                -- Enemy unit, let's attack
+                local tscore = p / d
+            end
+            if tscore > score then
+                targets[unitID] = t
+                score = tscore
+            end
+        end
+    end
 end
 
 function ai.UpdateTarget(unitID)
     if leaders[unitID] == nil then
         if targets[unitID] ~= nil then
-            -- This is not a leader, so why a target?
+            -- He is not a leader, so why a target?
             targets[unitID] = nil
         end
         return
     end
     -- Check the target
-
-    -- Try to eventually add a target
+    local target = targets[unitID]
+    if not Spring.ValidUnitID(target) or Spring.GetUnitIsDead(target) then
+        ai.GiveUpTarget(unitID)
+    end
+    -- Try to eventually add a target (just in case it has been removed)
     ai.AssignTarget(unitID)
 end

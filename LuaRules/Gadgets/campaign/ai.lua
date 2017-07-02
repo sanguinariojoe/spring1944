@@ -102,7 +102,7 @@ function ai._GetBestLeader(unitID)
 end
 
 function ai.AddUnit(unitID)
-    if not Spring.ValidUnitID(unitID) or units[unitID] then
+    if not Spring.ValidUnitID(unitID) or Spring.GetUnitIsDead(unitID) or units[unitID] then
         return
     end
 
@@ -120,8 +120,8 @@ function ai.AddUnit(unitID)
 end
 
 function _UpdateSquad(leader, squad)
-    -- Check if it has already a target, and if he is currently carring out the
-    -- task
+    -- Check if it has already a target
+    ai.UpdateTarget(leader)
     
 end
 
