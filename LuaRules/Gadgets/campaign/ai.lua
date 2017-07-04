@@ -13,7 +13,7 @@ if (not gadgetHandler:IsSyncedCode()) then
     return nil
 end
 
-local LEADER_RADIUS = 512
+local LEADER_RADIUS = 256
 local MAX_SQUAD_SIZE = 15
 
 ai = {
@@ -29,6 +29,7 @@ ai = {
 }
 
 include("LuaRules/Gadgets/campaign/ai_targets.lua")
+include("LuaRules/Gadgets/campaign/ai_formation.lua")
 
 -- Callins
 -- =======
@@ -123,6 +124,7 @@ function ai._UpdateSquad(leader, squad)
     -- Check if it has already a target
     ai.UpdateTarget(leader)
     -- Advance to the target in formation
+    ai.AdvanceToTarget(leader, squad, ai.targets[leader])
     -- {id = CMD.FIGHT,tag = 7,options = {alt = false,ctrl = true,internal = false,coded = 64,right = false,meta = false,shift = false,},params = {1321.21387,45.1745605,1144.25256,},}
     -- {id = CMD.SET_WANTED_MAX_SPEED,tag = 8,options = {alt = false,ctrl = true,internal = false,coded = 64,right = false,meta = false,shift = false,},params = {0.80000001,},}
 end
