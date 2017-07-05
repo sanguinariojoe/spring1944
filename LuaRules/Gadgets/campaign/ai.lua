@@ -103,7 +103,7 @@ function ai._GetBestLeader(unitID)
 end
 
 function ai.AddUnit(unitID)
-    if not Spring.ValidUnitID(unitID) or Spring.GetUnitIsDead(unitID) or units[unitID] then
+    if not Spring.ValidUnitID(unitID) or Spring.GetUnitIsDead(unitID) or ai.units[unitID] then
         return
     end
 
@@ -113,7 +113,7 @@ function ai.AddUnit(unitID)
         -- The unit should become a leader
         ai.leaders[unitID] = {}
         ai.units[unitID] = unitID
-        return        
+        return
     end
 
     ai.units[unitID] = unit_leader
@@ -137,6 +137,7 @@ function ai.Update()
     if next(ai.leaders, ai.leader) == nil then
         return
     end
-    local leader, squad = next(ai.leaders, ai.leader)
+    local leader, squad
+    leader, squad = next(ai.leaders, ai.leader)
     ai._UpdateSquad(leader, squad)
 end

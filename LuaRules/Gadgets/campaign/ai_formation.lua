@@ -1,9 +1,14 @@
 -- Please check that this file is included just from synced gadget
 
--- This better in ai table? (to can discard outdated leaders)
-local _dispatching = {}
+-- Small hack LUA 5.1 -> 5.2
+if unpack == nil then
+    unpack = table.unpack
+end
 
-local _iconType_classification = {
+-- This better in ai table? (to can discard outdated leaders)
+_dispatching = {}
+
+_iconType_classification = {
     default = nil,
     rifle = "assault",
     paratrooper = "assault",
@@ -109,7 +114,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     local a = {}
     for i,u in ipairs(assault) do
         local sign = 2 * math.fmod(i, 2) - 1
-        local x = td * floor((i - 1) / 2) * sign
+        local x = td * math.floor((i - 1) / 2) * sign
         local z = 0.0
         table.insert(a, {x * t[1] + z * n[1], x * t[2] + z * n[2]})
         local ulos = Spring.GetUnitSensorRadius(u, "los")
@@ -123,7 +128,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     local s = {}
     for i,u in ipairs(scouts) do
         local sign = 2 * math.fmod(i, 2) - 1
-        local x = td * floor((i - 1) / 2) * sign
+        local x = td * math.floor((i - 1) / 2) * sign
         local z = -10.0
         table.insert(s, {x * t[1] + z * n[1], x * t[2] + z * n[2]})
         local ulos = Spring.GetUnitSensorRadius(u, "los")
@@ -137,7 +142,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     local l = {}
     for i,u in ipairs(longRanges) do
         local sign = 2 * math.fmod(i, 2) - 1
-        local x = td * floor((i - 1) / 2) * sign
+        local x = td * math.floor((i - 1) / 2) * sign
         -- Theoretically, we don't need to check if weapon range required is
         -- valid (not nil)
         local z = los - Spring.GetUnitWeaponState(u, 1, "range")
@@ -190,9 +195,12 @@ function ai._SetSpeedFormation(assault, scouts, longRanges, n,
 end
 
 function ai.AdvanceToTarget(leader, squad, target)
+    if leader == nil or target == nil then
+        return
+    end
     local tx, ty, tz = Spring.GetUnitPosition(target)
     local x, y, z = Spring.GetUnitPosition(leader)
-    local units = {table.unpack(squad)}
+    local units = {unpack(squad)}
     table.insert(units, 1, leader)
 
     -- Classify the units
@@ -202,8 +210,8 @@ function ai.AdvanceToTarget(leader, squad, target)
     local suppliers = {}    -- They should guard units asking for ammo
     local ref_speed = nil
     for _,u in ipairs(units) do
-        local udef = Spring.GetUnitDefID(u)
-        local class_string = _iconType_classification[UnitDefs[udef].iconType]
+        local udef = UnitDefs[Spring.GetUnitDefID(u)]
+        local class_string = _iconType_classification[udef.iconType]
         local unit_speed = 0.0
         if class_string == "assault" then
             table.insert(assault, 1, u)
@@ -232,9 +240,9 @@ function ai.AdvanceToTarget(leader, squad, target)
         local maxammo = UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo
         local ammo = Spring.GetUnitRulesParam(u, 'ammo')
         if maxammo ~= nil and ammo ~= nil then
-            maxammo = floor(maxammo)
-            ammo = floor(ammo)
-            if floor(maxammo) > 0 and floor(ammo) < floor(maxammo) then
+            maxammo = math.floor(maxammo)
+            ammo = math.floor(ammo)
+            if maxammo > 0 and ammo < maxammo then
                 -- Ask for a supplier
                 -- ai._RemoveCommands(suppliers[supplier_index])
                 Spring.GiveOrderToUnit(suppliers[supplier_index], CMD.GUARD, {u}, {})
@@ -243,7 +251,7 @@ function ai.AdvanceToTarget(leader, squad, target)
         end
     end
 
-    while supplier_index <= #suppliers then
+    while supplier_index <= #suppliers do
         -- Assign the suppliers without commands to guard the leader
         local nCmds = Spring.GetUnitCommands(suppliers[supplier_index], 0)
         if nCmds ~= nil and nCmds == 0 then
@@ -253,7 +261,6 @@ function ai.AdvanceToTarget(leader, squad, target)
         supplier_index = supplier_index + 1
     end
 
-    
     if not #assault and not #scouts then
         -- Let's try to assign the units to a different squad
         new_leader = ai._GetBestLeader(leader)

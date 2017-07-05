@@ -3,23 +3,22 @@
 -- has an entry with his target.
 -- Leaders will try to accomplish the target until it becomes impossible.
 
-local _flags = nil
-local _targeteables = {}
-local _targeteable_names = {
-    ["flag"] = 0.5,
-    ["buoy"] = 0.5,
-    ["*barracks*"] = 1.0,
-    ["*tankyard*"] = 2.0,
-    ["*yard*"] = 1.0,
-    ["*engineer*"] = 2.0,
-    ["*engvehicle*"] = 4.0,
-    ["*hq*"] = 1.5,
+_targeteables = {}
+_targeteable_names = {
+    flag = 0.5,
+    buoy = 0.5,
+    barracks = 1.0,
+    tankyard = 2.0,
+    yard = 1.0,
+    engineer = 2.0,
+    engvehicle = 4.0,
+    hq = 1.5,
 }
 
 function ai.AddTargeteable(unitID)
     local uname = UnitDefs[Spring.GetUnitDefID(unitID)].name
-    for tname,tval in ipairs(_targeteable_names) do
-        if name == string.match(uname, tname) then
+    for tname,tval in pairs(_targeteable_names) do
+        if string.find(uname, tname) ~= nil then
             _targeteables[unitID] = tval
             break
         end
@@ -32,7 +31,7 @@ end
 
 
 function ai.GiveUpTarget(unitID)
-    targets[unitID] = nil
+    ai.targets[unitID] = nil
 end
 
 function ai.AssignTarget(unitID)
@@ -47,8 +46,8 @@ function ai.AssignTarget(unitID)
     -- depending on their priority and distance
     local score = 0.0
     local allyID = Spring.GetUnitAllyTeam(unitID)
-    local x, y, z = Spring.GetUnitPosition(t)
-    local unitDefID = Spring.GetUnitDefID(u)
+    local x, y, z = Spring.GetUnitPosition(unitID)
+    local unitDefID = Spring.GetUnitDefID(unitID)
     for t,p in pairs(_targeteables) do
         -- Check if we may reach the target. To do so, we obviously should avoid
         -- testing for blocking objects
@@ -63,7 +62,7 @@ function ai.AssignTarget(unitID)
                 tscore = 0.0
             else
                 -- Enemy unit, let's attack
-                local tscore = p / d
+                tscore = p / d
             end
             if tscore > score then
                 ai.targets[unitID] = t

@@ -71,6 +71,22 @@ gadget.missions = {
             {0, [[SwitchUnitCommand(_G["barracks"], "usgmctruck", false)]]},
             {0, [[SwitchUnitCommand(_G["barracks"], "uspontoontruck", false)]]},
             {0, [[SwitchUnitCommand(_G["storage"], "  Upgrade  ", false)]]},
+
+            {0, [[CreateUnit("ger_platoon_rifle", 3200, 0, 1000, "west", 2)]]},
+            {0, [[CreateUnit("ger_platoon_mortar", 3250, 0, 1000, "west", 2)]]},
+            {0, [[CreateUnit("ger_platoon_assault", 3200, 0, 1500, "west", 2)]]},
+            {0, [[CreateUnit("ger_platoon_mortar", 3250, 0, 1500, "west", 2)]]},
+            {0, [[CreateUnit("ger_platoon_rifle", 3200, 0, 2000, "west", 2)]]},
+            {0, [[CreateUnit("ger_platoon_mortar", 3250, 0, 2000, "west", 2)]]},
+            {1, [[local units = Spring.GetUnitsInRectangle(3000, 800, 3450, 2200, config.teams[2].teamID)
+                  for _,u in ipairs(units) do
+                      local maxammo = UnitDefs[Spring.GetUnitDefID(u)].customParams.maxammo
+                      if maxammo ~= nil and math.floor(maxammo) > 0 then
+                          SyncedFunction("Spring.SetUnitRulesParam", {u, 'ammo', math.floor(maxammo)})
+                      end
+                      ai.AddUnit(u)
+                  end]]},
+
             {1, [[MessageToPlayer("Welcome again commander!")]]},
             {10, [[MessageToPlayer("We have been working hard to get ready the barracks and the storage")]]},
             {10, [[Spring.SetCameraTarget(1800, 205, 135, 2)]]},

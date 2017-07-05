@@ -65,7 +65,10 @@ function gadget:GameFrame(f)
                 end
             end
         end
+    else
 	end
+
+    ai.Update()
 end
 
 function gadget:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z)
