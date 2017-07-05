@@ -61,9 +61,9 @@ function ai.RelevateLeader(unitID)
 
     if #ai.leaders[unitID] > 0 then
         local squad = ai.leaders[unitID]
-        local l = ai.squad[i]
-        table.remove(ai.squad, 1)
-        ai.leaders[l] = ai.squad
+        local l = squad[1]
+        table.remove(squad, 1)
+        ai.leaders[l] = squad
     end
     ai.leaders[unitID] = nil
     ai.targets[unitID] = nil
@@ -116,8 +116,8 @@ function ai.AddUnit(unitID)
         return        
     end
 
-    units[unitID] = unit_leader
-    table.insert(leaders[unit_leader], unitID)
+    ai.units[unitID] = unit_leader
+    table.insert(ai.leaders[unit_leader], unitID)
 end
 
 function ai._UpdateSquad(leader, squad)
@@ -130,6 +130,10 @@ function ai._UpdateSquad(leader, squad)
 end
 
 function ai.Update()
+    if ai.leader ~= nil and ai.leaders[ai.leader] == nil then
+        -- The leader was destroyed, better restart the list
+        ai.leader = nil
+    end
     if next(ai.leaders, ai.leader) == nil then
         return
     end
