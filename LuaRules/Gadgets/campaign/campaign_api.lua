@@ -459,12 +459,6 @@ end
 --
 
 function gadget:TeamDied(teamID)
-	for _,c in ipairs(team_died_callbacks) do
-        if teamID == config.teams[c[2]].teamID then
-            local callback = c[1]
-            callback()
-        end
-    end    
 end
 
 --------------------------------------------------------------------------------
