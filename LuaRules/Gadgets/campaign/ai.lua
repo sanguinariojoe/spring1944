@@ -135,7 +135,13 @@ function ai.Update()
         ai.leader = nil
     end
     if next(ai.leaders, ai.leader) == nil then
-        return
+        if ai.leader == nil then
+            -- There are not leaders to manage
+            return
+        else
+            -- Restart the list
+            ai.leader = nil
+        end
     end
     local leader, squad
     leader, squad = next(ai.leaders, ai.leader)

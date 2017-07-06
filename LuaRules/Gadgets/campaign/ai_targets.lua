@@ -84,6 +84,9 @@ function ai.UpdateTarget(unitID)
     local target = ai.targets[unitID]
     if not Spring.ValidUnitID(target) or Spring.GetUnitIsDead(target) then
         ai.GiveUpTarget(unitID)
+    elseif Spring.GetUnitAllyTeam(unitID) == Spring.GetUnitAllyTeam(target) then
+        -- Captured target
+        ai.GiveUpTarget(unitID)
     end
     -- Try to eventually add a target (just in case it has been removed)
     ai.AssignTarget(unitID)

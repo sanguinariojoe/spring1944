@@ -278,6 +278,6 @@ function ai.AdvanceToTarget(leader, squad, target)
     end
 
     -- Set the speed of the units
-    ai._SetSpeedFormation(assault, scouts, longRanges, {dx / d, dz / d},
-                          a_r, s_r, l_r, ref_speed)
+    -- ai._SetSpeedFormation(assault, scouts, longRanges, {dx / d, dz / d},
+    --                       a_r, s_r, l_r, ref_speed)
 end
