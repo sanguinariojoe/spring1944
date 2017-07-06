@@ -39,9 +39,9 @@ _classname_classification = {
     Boat = "longRange",
     BoatMother = "longRange",
     ArmedBoat = "longRange",
-    HalfTrack = "supply"
-    InfantryLandingCraft = "supply"
-    TankLandingCraft = "supply"
+    HalfTrack = "supply",
+    InfantryLandingCraft = "supply",
+    TankLandingCraft = "supply",
 }
 
 function ai._RemoveCommands(unitID)
@@ -117,7 +117,7 @@ function ai._SetSpeedUnit(unitID, speed)
     -- Ask to set the velocity
     Spring.GiveOrderToUnit(unitID,
         CMD.INSERT,
-        {-1, CMD.SET_WANTED_MAX_SPEED, {CMD.OPT_SHIFT, CMD.OPT_CTRL}, {speed}},
+        {-1, CMD.SET_WANTED_MAX_SPEED, CMD.OPT_CTRL, speed},
         {"alt"}
     )
 
@@ -170,16 +170,16 @@ function ai.AdvanceToTarget(leader, squad, target)
         local unit_speed = 0.0
         if class_string == "assault" then
             table.insert(assault, 1, u)
-            unit_speed = udef.maxvelocity
+            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "scout" then
             table.insert(scouts, 1, u)
-            unit_speed = udef.maxvelocity
+            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "longRange" then
             table.insert(longRanges, 1, u)
-            unit_speed = udef.maxvelocity
+            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "supply" then
             table.insert(suppliers, 1, u)
-            unit_speed = udef.maxvelocity
+            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         end
         if ref_speed == nil or unit_speed < ref_speed then
             ref_speed = unit_speed
@@ -248,10 +248,9 @@ function ai.AdvanceToTarget(leader, squad, target)
             local px, pz = tx + a_r[i][1], tz + a_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u,
-                CMD.INSERT,
-                {-1, CMD.FIGHT, {CMD.OPT_SHIFT, CMD.OPT_CTRL}, {px, py, pz}},
-                {"alt"}
-            )
+                                   CMD.INSERT,
+                                   {-1, CMD.FIGHT, CMD.OPT_CTRL, px, py, pz},
+                                   {"alt"})
         end
         for i,u in ipairs(scouts) do
             -- ai._RemoveCommands(u)
@@ -261,10 +260,9 @@ function ai.AdvanceToTarget(leader, squad, target)
             local px, pz = tx + a_s[i][1], tz + a_s[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u,
-                CMD.INSERT,
-                {-1, CMD.FIGHT, {CMD.OPT_SHIFT, CMD.OPT_CTRL}, {px, py, pz}},
-                {"alt"}
-            )
+                                   CMD.INSERT,
+                                   {-1, CMD.FIGHT, CMD.OPT_CTRL, px, py, pz},
+                                   {"alt"})
         end
         -- Regarding the long range units, they could directly advance to the
         -- designated possition

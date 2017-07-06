@@ -51,27 +51,6 @@ gadget.missions = {
     -- ============
     [1] = {
         events = {  -- Ensure they are sorted in time
-            {0, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
-            {0, [[_G["storage"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usstorage")[1] ]]},
-            {0, [[for _, flag in ipairs(FilterUnitsByName(Spring.GetAllUnits(), "flag")) do
-                      local x, y, z = Spring.GetUnitPosition(flag)
-                      if x < 2500 then
-                          SyncedFunction("Spring.TransferUnit", {flag, Spring.GetMyTeamID()})
-                      end
-                  end
-                ]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "ushqengineer", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_rifle", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_assault", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_at", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_sniper", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_flame", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mortar", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "us_platoon_infgun", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "usgmctruck", false)]]},
-            {0, [[SwitchUnitCommand(_G["barracks"], "uspontoontruck", false)]]},
-            {0, [[SwitchUnitCommand(_G["storage"], "  Upgrade  ", false)]]},
-
             {0, [[CreateUnit("ger_platoon_rifle", 3200, 0, 1000, "west", 2)]]},
             {0, [[CreateUnit("ger_platoon_mortar", 3250, 0, 1000, "west", 2)]]},
             {0, [[CreateUnit("ger_platoon_assault", 3200, 0, 1500, "west", 2)]]},
@@ -87,7 +66,27 @@ gadget.missions = {
                       ai.AddUnit(u)
                   end]]},
 
-            {1, [[MessageToPlayer("Welcome again commander!")]]},
+            {1, [[_G["barracks"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usbarracks")[1] ]]},
+            {1, [[_G["storage"] = FilterUnitsByName(Spring.GetTeamUnits(Spring.GetMyTeamID()), "usstorage")[1] ]]},
+            {1, [[for _, flag in ipairs(FilterUnitsByName(Spring.GetAllUnits(), "flag")) do
+                      local x, y, z = Spring.GetUnitPosition(flag)
+                      if x < 2500 then
+                          SyncedFunction("Spring.TransferUnit", {flag, Spring.GetMyTeamID()})
+                      end
+                  end
+                ]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "ushqengineer", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_rifle", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_assault", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_at", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_sniper", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_flame", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_mortar", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "us_platoon_infgun", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "usgmctruck", false)]]},
+            {1, [[SwitchUnitCommand(_G["barracks"], "uspontoontruck", false)]]},
+            {1, [[SwitchUnitCommand(_G["storage"], "  Upgrade  ", false)]]},
+            {2, [[MessageToPlayer("Welcome again commander!")]]},
             {10, [[MessageToPlayer("We have been working hard to get ready the barracks and the storage")]]},
             {10, [[Spring.SetCameraTarget(1800, 205, 135, 2)]]},
             {10, [[MessageToPlayer("The barracks can be used to produce infantry.")]]},
