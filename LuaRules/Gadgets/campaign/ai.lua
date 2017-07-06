@@ -140,4 +140,5 @@ function ai.Update()
     local leader, squad
     leader, squad = next(ai.leaders, ai.leader)
     ai._UpdateSquad(leader, squad)
+    ai.leader = leader
 end

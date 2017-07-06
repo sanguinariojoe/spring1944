@@ -254,10 +254,10 @@ function ai.AdvanceToTarget(leader, squad, target)
         end
         for i,u in ipairs(scouts) do
             -- ai._RemoveCommands(u)
-            local px, pz = x + a_s[i][1], z + a_s[i][2]
+            local px, pz = x + s_r[i][1], z + s_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u, CMD.FIGHT, {px, py, pz}, {})
-            local px, pz = tx + a_s[i][1], tz + a_s[i][2]
+            local px, pz = tx + s_r[i][1], tz + s_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u,
                                    CMD.INSERT,
@@ -268,7 +268,7 @@ function ai.AdvanceToTarget(leader, squad, target)
         -- designated possition
         for i,u in ipairs(longRanges) do
             -- ai._RemoveCommands(u)
-            local px, pz = tx + a_r[i][1], tz + a_r[i][2]
+            local px, pz = tx + l_r[i][1], tz + l_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u, CMD.FIGHT, {px, py, pz}, {"ctrl"})
         end        
