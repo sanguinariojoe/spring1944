@@ -172,6 +172,11 @@ for _, baseClassType in pairs(baseClassTypes) do
 	for _, file in pairs(baseClasses) do
 		newClasses = VFS.Include(file, VFS.ZIP)
 		for className, class in pairs(newClasses) do
+			if class.customparams == nil then
+				class.customparams = {classname=className,}
+			else
+				class.customparams.classname = className
+			end
 			sharedEnv[className] = class
 			_G[className] = class
 		end
