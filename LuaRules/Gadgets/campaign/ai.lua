@@ -72,7 +72,11 @@ end
 function ai.RemoveUnit(unitID)
     -- Eventually relevate him as leader
     ai.RelevateLeader(unitID)
-    -- And remove the unit for the handled ones
+    -- Remove the unit from the squads
+    for l,s in pairs(ai.leaders) do
+        s[unitID] = nil
+    end
+    -- Remove the unit for the handled ones
     if ai.units[unitID] then
         ai.units[unitID] = nil
     end
