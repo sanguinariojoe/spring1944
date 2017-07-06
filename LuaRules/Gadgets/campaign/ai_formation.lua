@@ -61,7 +61,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     local los = 0.0
 
     -- First row of assault units
-    local td = 10.0
+    local td = 30.0
     local a = {}
     for i,u in ipairs(assault) do
         local sign = 2 * math.fmod(i, 2) - 1
@@ -75,7 +75,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     end
 
     -- A bit behind them, a row of scouts units
-    local td = 30.0
+    local td = 90.0
     local s = {}
     for i,u in ipairs(scouts) do
         local sign = 2 * math.fmod(i, 2) - 1
@@ -89,7 +89,7 @@ function ai._ComputeFormation(assault, scouts, longRanges, n)
     end
 
     -- The longRange units should be placed as far as possible
-    local td = 30.0
+    local td = 90.0
     local l = {}
     for i,u in ipairs(longRanges) do
         local sign = 2 * math.fmod(i, 2) - 1
@@ -111,6 +111,10 @@ function ai._SetSpeedUnit(unitID, speed)
     end
     -- Check if the last command is already a velocity config one
     local cmds = Spring.GetUnitCommands(unitID, nCmds)
+    if nCmds == 2 and cmds[nCmds].id ~= CMD.SET_WANTED_MAX_SPEED then
+        -- Unit is forming
+        return
+    end
     if cmds[nCmds].id == CMD.SET_WANTED_MAX_SPEED then
         Spring.GiveOrderToUnit(unitID, CMD.REMOVE, {cmds[nCmds].tag}, {})
     end
@@ -137,7 +141,35 @@ function ai._SetSpeedFormation(assault, scouts, longRanges, n,
             ai._SetSpeedUnit(u, ref_speed)
         elseif dn < 0.0 then
             -- The unit should catch up the rest of the squad
-            ai._SetSpeedUnit(u, Spring.GetUnitDefID(u).maxvelocity)
+            ai._SetSpeedUnit(u, Spring.GetUnitMoveTypeData(u).maxSpeed)
+        else
+            -- The unit should wait for the rest of the squad
+            ai._SetSpeedUnit(u, ref_speed * 100.0 / dn)
+        end
+    end
+    for i,u in ipairs(scouts) do
+        local x, y, z = Spring.GetUnitPosition(u)
+        local dx, dz = (x - rx) - scout_r[i][1], (z - rz) - scout_r[i][2]
+        local dn = dx * n[1] + dz * n[2]
+        if math.abs(dn) < 100.0 then
+            ai._SetSpeedUnit(u, ref_speed)
+        elseif dn < 0.0 then
+            -- The unit should catch up the rest of the squad
+            ai._SetSpeedUnit(u, Spring.GetUnitMoveTypeData(u).maxSpeed)
+        else
+            -- The unit should wait for the rest of the squad
+            ai._SetSpeedUnit(u, ref_speed * 100.0 / dn)
+        end
+    end
+    for i,u in ipairs(longRanges) do
+        local x, y, z = Spring.GetUnitPosition(u)
+        local dx, dz = (x - rx) - long_r[i][1], (z - rz) - long_r[i][2]
+        local dn = dx * n[1] + dz * n[2]
+        if math.abs(dn) < 100.0 then
+            ai._SetSpeedUnit(u, ref_speed)
+        elseif dn < 0.0 then
+            -- The unit should catch up the rest of the squad
+            ai._SetSpeedUnit(u, Spring.GetUnitMoveTypeData(u).maxSpeed)
         else
             -- The unit should wait for the rest of the squad
             ai._SetSpeedUnit(u, ref_speed * 100.0 / dn)
@@ -159,7 +191,7 @@ function ai.AdvanceToTarget(leader, squad, target)
     local scouts = {}       -- Scouting units, just to get enemies in LOS
     local longRanges = {}   -- They should keep as far as possible
     local suppliers = {}    -- They should guard units asking for ammo
-    local ref_speed = nil
+    local ref_speed = 0.8   -- No idea why 0.8, but it's not related with Spring.GetUnitMoveTypeData(u).maxSpeed
     for _,u in ipairs(units) do
         local udef = UnitDefs[Spring.GetUnitDefID(u)]
         local class_string = _classname_classification[udef.customParams.classname]
@@ -167,22 +199,14 @@ function ai.AdvanceToTarget(leader, squad, target)
             -- Some half trucks have Vehicle classes
             class_string = "supply"
         end
-        local unit_speed = 0.0
         if class_string == "assault" then
             table.insert(assault, 1, u)
-            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "scout" then
             table.insert(scouts, 1, u)
-            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "longRange" then
             table.insert(longRanges, 1, u)
-            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
         elseif class_string == "supply" then
             table.insert(suppliers, 1, u)
-            unit_speed = Spring.GetUnitMoveTypeData(u).maxSpeed
-        end
-        if ref_speed == nil or unit_speed < ref_speed then
-            ref_speed = unit_speed
         end
     end
 
@@ -216,7 +240,7 @@ function ai.AdvanceToTarget(leader, squad, target)
         supplier_index = supplier_index + 1
     end
 
-    if not #assault and not #scouts then
+    if assault[1] == nil and scouts[1] == nil then
         -- Let's try to assign the units to a different squad
         new_leader = ai._GetBestLeader(leader)
         if new_leader ~= nil then
@@ -248,9 +272,9 @@ function ai.AdvanceToTarget(leader, squad, target)
             local px, pz = tx + a_r[i][1], tz + a_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u,
-                                   CMD.INSERT,
-                                   {-1, CMD.FIGHT, CMD.OPT_CTRL, px, py, pz},
-                                   {"alt"})
+                CMD.INSERT,
+                {-1, CMD.FIGHT, CMD.OPT_SHIFT + CMD.OPT_CTRL, px, py, pz},
+                {"alt"})
         end
         for i,u in ipairs(scouts) do
             -- ai._RemoveCommands(u)
@@ -260,9 +284,9 @@ function ai.AdvanceToTarget(leader, squad, target)
             local px, pz = tx + s_r[i][1], tz + s_r[i][2]
             local py = Spring.GetGroundHeight(px, pz)
             Spring.GiveOrderToUnit(u,
-                                   CMD.INSERT,
-                                   {-1, CMD.FIGHT, CMD.OPT_CTRL, px, py, pz},
-                                   {"alt"})
+                CMD.INSERT,
+                {-1, CMD.FIGHT, CMD.OPT_SHIFT + CMD.OPT_CTRL, px, py, pz},
+                {"alt"})
         end
         -- Regarding the long range units, they could directly advance to the
         -- designated possition
@@ -278,6 +302,6 @@ function ai.AdvanceToTarget(leader, squad, target)
     end
 
     -- Set the speed of the units
-    -- ai._SetSpeedFormation(assault, scouts, longRanges, {dx / d, dz / d},
-    --                       a_r, s_r, l_r, ref_speed)
+    ai._SetSpeedFormation(assault, scouts, longRanges, {dx / d, dz / d},
+                          a_r, s_r, l_r, ref_speed)
 end
