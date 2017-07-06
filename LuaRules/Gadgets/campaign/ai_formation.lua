@@ -7,90 +7,41 @@ end
 
 -- This better in ai table? (to can discard outdated leaders)
 _dispatching = {}
-
-_iconType_classification = {
-    default = nil,
-    rifle = "assault",
-    paratrooper = "assault",
-    assault = "assault",
-    antitank = "assault",
-    mortar = "longRange",
-    sniper = "longRange",
-    officer = nil,
-    engineer = nil,
-    advancedengineer = nil,
-    engineervehicle = nil,
-    lightmg = "assault",
-    bar = "assault",
-    flame = "assault",
-    aaartillery = nil,
-    atartillery = nil,
-    aahalftrack = "longRange",
-    aacar = "longRange",
-    aatruck = nil,
-    attruck = nil,
-    fgtruck = nil,
-    armoredcar = "longRange",
-    artillery = nil,
-    bomber = nil,
-    fighter = nil,
-    fighterbomber = nil,
-
-    gerhq = nil,
-    ushq = nil,
-    gbrhq = nil,
-    halftrack = "supply",
-    heavytank = "longRange",
-    medtank = "longRange",
-    lighttank = "longRange",
-    jeep = "scout",
-    recon = "scout",
-    selfprop = "longRange",
-    sparty = "longRange",
-    stockpile = nil,
-    rockettruck = "longRange",
-    truck = nil,
-    ptruck = nil,
-    truck_factory = nil,
-    truck_barracks = nil,
-    htruck = nil,
-    rtruck = nil,
-    ammo = nil,
-    ammo2 = nil,
-    factory = nil,
-    usflag = nil,
-    gbrflag = nil,
-    gerflag = nil,
-    mines = nil,
-    rusflag = nil,
-    commissar = "scout",
-    partisan = "assault",
-    commando = "assault",
-    rubber = "assault",
-    lttrans = nil,
-    raft    = nil,
-    rusptrd = nil,
-    barracks = nil,
-    radar = nil,
-    flag = nil,
-    shack = nil,
-    shipyard = nil,
-    hshipyard = nil,
-    destroyer = "longRange",
-    torpboat = "assault",
-    gunboat = "longRange",
-    artyboat = "longRange",
-    turret = nil,
-    landingship = "assault",
-    transportship = nil,
-    transportplane = nil,
-    flametank = "assault",
-    itahq = nil,
-    itasolo = "assault",
-    itascopedsolo = "assault",
-    jpnhq = nil,
-    swehq = nil,
-    hunhq = nil,
+_classname_classification = {
+    RifleInf = "assault",
+    SMGInf = "assault",
+    LMGInf = "assault",
+    HMGInf = "assault",
+    LightMortarInf = "assault",
+    FlameInf = "assault",
+    ATLauncherInf = "assault",
+    ATGrenadeInf = "assault",
+    ATRifleInf = "assault",
+    Tankette = "assault",
+    AssaultBoat = "assault",
+    ScoutCar = "scout",
+    Vehicle = "scout",
+    Tankette = "scout",
+    SniperInf = "longRange",
+    MedMortarInf = "longRange",
+    InfantryGun = "longRange",
+    ArmouredCar = "longRange",
+    HeavyArmouredCar = "longRange",
+    MobileAA = "longRange",
+    ArmouredCarAA = "longRange",
+    Tank = "longRange",
+    LightTank = "longRange",
+    MediumTank = "longRange",
+    HeavyTank = "longRange",
+    AssaultGun = "longRange",
+    TankDestroyer = "longRange",
+    SPArty = "longRange",
+    Boat = "longRange",
+    BoatMother = "longRange",
+    ArmedBoat = "longRange",
+    HalfTrack = "supply"
+    InfantryLandingCraft = "supply"
+    TankLandingCraft = "supply"
 }
 
 function ai._RemoveCommands(unitID)
@@ -211,12 +162,16 @@ function ai.AdvanceToTarget(leader, squad, target)
     local ref_speed = nil
     for _,u in ipairs(units) do
         local udef = UnitDefs[Spring.GetUnitDefID(u)]
-        local class_string = _iconType_classification[udef.iconType]
+        local class_string = _classname_classification[udef.customParams.classname]
+        if class_string ~= nil and udef.customParams.supplyRange ~= nil then
+            -- Some half trucks have Vehicle classes
+            class_string = "supply"
+        end
         local unit_speed = 0.0
         if class_string == "assault" then
             table.insert(assault, 1, u)
             unit_speed = udef.maxvelocity
-        elseif class_string == "scouts" then
+        elseif class_string == "scout" then
             table.insert(scouts, 1, u)
             unit_speed = udef.maxvelocity
         elseif class_string == "longRange" then
