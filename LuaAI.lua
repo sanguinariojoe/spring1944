@@ -13,12 +13,8 @@ local listOfLuaAIs = {
         desc = "Configurable Reusable Ai Gadget",
     },
     {
-        name = "Campaign - Chapter I",
-        desc = "Learn the infantry basics (Map:1944_Cooper_Hill_v3)",
-    },
-    {
-        name = "Campaign - Chapter II",
-        desc = "Defending the Cooper Hill (Map:1944_Cooper_Hill_v3)",
+        name = "Campaign empty bot",
+        desc = "Empty bot to be added in all the available slots",
     },
 }
      

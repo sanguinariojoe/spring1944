@@ -1,3 +1,15 @@
+function gadget:GetInfo()
+	return {
+		name = "CAMPAIGN",
+		desc = "Campaign gadget",
+		author = "Jose Luis Cercos-Pita",
+		date = "2017-07-7",
+		license = "GNU General Public License v3",
+  		layer = -1,
+		enabled = true,
+	}
+end
+
 include("LuaRules/Gadgets/campaign/ai.lua")
 local error_msg = nil
 
@@ -16,8 +28,10 @@ function gadget:GamePreload()
         local gaiaTeamID = Spring.GetGaiaTeamID()
         if teamID ~= gaiaTeamID then
             if not isAI then
+                Spring.Echo("config.teams[1]", teamID)
                 config.teams[1].teamID = teamID
             else
+                Spring.Echo("config.teams", ia_index, teamID)
                 config.teams[ia_index].teamID = teamID
                 ia_index = ia_index + 1
             end
@@ -108,7 +122,6 @@ local MY_PLAYER_ID = Spring.GetMyPlayerID()
 -- locals
 local BOT_Debug_Mode = 1 -- Must be 0 or 1
 local team = {}
-local imTheMainPlayer = false
 local mainPlayer = nil
 local allyTeamID = nil
 
@@ -220,47 +233,11 @@ function gadget:Initialize()
 	})
     --]]
 	SetupCmdChangeAIDebugVerbosity()
-    if config.sun then
-        local x, y, z
-        Log("Changing default sung values")
-        x, y, z  = gl.GetSun("pos")
-        Log("SunDir: ", x, ", ", y, ", ", z)
-        x, y, z  = gl.GetSun("ambient")
-        Log("SunAmbient: ", x, ", ", y, ", ", z)
-        x, y, z  = gl.GetSun("diffuse")
-        Log("SunDiffuse: ", x, ", ", y, ", ", z)
-        x, y, z  = gl.GetSun("specular")
-        Log("SunSpecular: ", x, ", ", y, ", ", z)
-        if config.sun.dir then
-            x, y, z = config.sun.dir[1], config.sun.dir[2], config.sun.dir[3]
-            local norm = math.sqrt(x * x + y * y + z * z)
-            x, y, z = x / norm, y / norm, z / norm
-            Spring.SetSunManualControl(true)
-            Spring.SetSunDirection(x, y, z)
-        end
-        if config.sun.ambient then
-            Spring.SetSunLighting({groundAmbientColor = config.sun.ambient})
-            Spring.SetSunLighting({unitAmbientColor = config.sun.ambient})
-        end
-        if config.sun.diffuse then
-            Spring.SetSunLighting({groundDiffuseColor = config.sun.diffuse})
-            Spring.SetSunLighting({unitDiffuseColor = config.sun.diffuse})
-        end
-        if config.sun.specular then
-            Spring.SetSunLighting({groundSpecularColor = config.sun.specular})
-            Spring.SetSunLighting({unitSpecularColor = config.sun.specular})
-        end
-    end
 end
 
 function gadget:GamePreload()
 	-- This is executed BEFORE headquarters / commander is spawned
 	Log("gadget:GamePreload")
-	-- Check the map
-    if config.map and config.map ~= Game.mapName then
-        error_msg = "Please, select the following map: " .. config.map
-        return
-    end
     -- Setup the teams
     if #config.teams ~= #Spring.GetTeamList() - 1 then
         error_msg = string.format("Got %d teams, but %d are required", #Spring.GetTeamList(), #config.teams)
@@ -272,12 +249,14 @@ function gadget:GamePreload()
         local gaiaTeamID = Spring.GetGaiaTeamID()
         if teamID ~= gaiaTeamID then
             if not isAI then
+                Spring.Echo("config.teams[1]", teamID)
                 config.teams[1].teamID = teamID
             else
-                if Spring.GetTeamLuaAI(teamID) ~= gadget:GetInfo().name then
-                    error_msg = string.format("Team %d should be controlled by ", i - gaia) .. gadget:GetInfo().name
+                if Spring.GetTeamLuaAI(teamID) ~= "Campaign empty bot" then
+                    error_msg = string.format("Team %d should be controlled by Campaign empty bot", ia_index - gaia)
                     return
                 end
+                Spring.Echo("config.teams", ia_index, teamID)
                 config.teams[ia_index].teamID = teamID
                 ia_index = ia_index + 1
             end
@@ -291,7 +270,6 @@ function gadget:GamePreload()
             mainPlayer = leader
         end
         if not isAI and teamID == myTeamID then
-            imTheMainPlayer = true
             allyTeamID = Spring.GetMyAllyTeamID()
 	    end
     end
@@ -308,13 +286,13 @@ function gadget:GameFrame(f)
         -- This is executed AFTER headquarters / commander is spawned
         Log("gadget:GameFrame 1")
         -- Load the mission (just if we are the player instance)
-        if imTheMainPlayer and current_mission == nil then
+        if current_mission == nil then
             -- For some reason it is calling each function twice
             LoadMission()
         end
     end
 
-    if imTheMainPlayer and current_mission then
+    if current_mission then
         -- Launch delay based events
         AfterDelay()
         -- Check triggered events
@@ -414,7 +392,7 @@ function IsAreaCleared(x, y, z, radius)
 end
 
 function IsFlagCaptured(x, y, z)
-    local radius = 10
+    local radius = 100
     local units = Spring.GetUnitsInCylinder(x, z, radius, Spring.GetMyTeamID())
     for _, u in ipairs(units) do
         local unitDefID = Spring.GetUnitDefID(u)
