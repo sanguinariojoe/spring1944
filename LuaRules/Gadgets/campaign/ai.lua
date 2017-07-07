@@ -49,8 +49,12 @@ function ai.UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
     -- remain controlled even if it is given to a human controlled team.
     -- Hence, the campaign developer is responsible of eventually reassigning
     -- the unit to the AI
-    ai.UnitDestroyed(unitID, unitDefID, unitTeam, nil, nil, nil)
+    ai.RemoveUnit(unitID)
 end
+
+function ai.UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+end
+
 
 -- Callouts
 -- ========
@@ -72,10 +76,6 @@ end
 function ai.RemoveUnit(unitID)
     -- Eventually relevate him as leader
     ai.RelevateLeader(unitID)
-    -- Remove the unit from the squads
-    for l,s in pairs(ai.leaders) do
-        s[unitID] = nil
-    end
     -- Remove the unit for the handled ones
     if ai.units[unitID] then
         ai.units[unitID] = nil
@@ -149,6 +149,12 @@ function ai.Update()
     end
     local leader, squad
     leader, squad = next(ai.leaders, ai.leader)
+    -- Remove units from squad eventually not managed by the AI anymore
+    for i = #squad,1,-1 do
+        if ai.units[squad[i]] == nil then
+            table.remove(squad, i)
+        end
+    end
     ai._UpdateSquad(leader, squad)
     ai.leader = leader
 end

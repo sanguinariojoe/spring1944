@@ -84,7 +84,11 @@ function gadget:UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerD
 end
 
 function gadget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
-    ai.UnitDestroyed(unitID, unitDefID, unitTeam, attackerID, attackerDefID, attackerTeam)
+    ai.UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+end
+
+function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+    ai.UnitTaken(unitID, unitDefID, unitTeam, newTeam)
 end
 
 else

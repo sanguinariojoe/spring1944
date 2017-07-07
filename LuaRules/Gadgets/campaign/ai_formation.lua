@@ -183,7 +183,14 @@ function ai.AdvanceToTarget(leader, squad, target)
     end
     local tx, ty, tz = Spring.GetUnitPosition(target)
     local x, y, z = Spring.GetUnitPosition(leader)
-    local units = {unpack(squad)}
+    local units = {}
+    for _,u in ipairs(squad) do
+        if Spring.ValidUnitID(target) and not Spring.GetUnitIsDead(target) then
+            -- For some reason, when a unit is dead the squad is not correctly
+            -- sanitized, so better checking twice
+            table.insert(units, 1, u)
+        end
+    end
     table.insert(units, 1, leader)
 
     -- Classify the units
