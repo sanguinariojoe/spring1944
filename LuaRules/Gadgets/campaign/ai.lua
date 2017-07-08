@@ -65,9 +65,15 @@ function ai.RelevateLeader(unitID)
 
     if #ai.leaders[unitID] > 0 then
         local squad = ai.leaders[unitID]
-        local l = squad[1]
-        table.remove(squad, 1)
-        ai.leaders[l] = squad
+        l = nil
+        for i=#squad,1,-1 do
+            local l = squad[i]
+            table.remove(squad, i)
+            if l ~= nil then
+                ai.leaders[l] = squad
+                break
+            end
+        end
     end
     ai.leaders[unitID] = nil
     ai.targets[unitID] = nil
