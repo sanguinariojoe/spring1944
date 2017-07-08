@@ -159,12 +159,14 @@ function ai.Update()
     end
     local leader, squad
     leader, squad = next(ai.leaders, ai.leader)
-    -- Remove units from squad eventually not managed by the AI anymore
-    for i = #squad,1,-1 do
-        if ai.units[squad[i]] == nil then
-            table.remove(squad, i)
-        end
-    end
-    ai._UpdateSquad(leader, squad)
     ai.leader = leader
+    if leader ~= nil then
+        -- Remove units from squad eventually not managed by the AI anymore
+        for i = #squad,1,-1 do
+            if ai.units[squad[i]] == nil then
+                table.remove(squad, i)
+            end
+        end
+        ai._UpdateSquad(leader, squad)
+    end
 end
