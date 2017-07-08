@@ -89,11 +89,15 @@ function ai._GetBestLeader(unitID)
     if not #leader_candidates then
         return nil
     end
+    -- Check the very only best leader is himself
+    if #leader_candidates == 1 and leader_candidates[1] == unitID then
+        return nil
+    end
     -- Get the closest leader with an available slot
     l_unit = nil
     l_score = 0.0
     for _,l in ipairs(leader_candidates) do
-        if ai.leaders[l] ~= nil and #ai.leaders[l] < MAX_SQUAD_SIZE then
+        if l ~= unitID and ai.leaders[l] ~= nil and #ai.leaders[l] < MAX_SQUAD_SIZE then
             local lx, ly, lz = Spring.GetUnitPosition(l)
             local dx, dy, dz = x - lx, y - ly, z - lz
             local score = 1.0 / (dx * dx + dy * dy + dz * dz)

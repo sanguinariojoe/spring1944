@@ -185,7 +185,8 @@ function ai.AdvanceToTarget(leader, squad, target)
     local x, y, z = Spring.GetUnitPosition(leader)
     local units = {}
     for _,u in ipairs(squad) do
-        if Spring.ValidUnitID(target) and not Spring.GetUnitIsDead(target) then
+        local udef = UnitDefs[Spring.GetUnitDefID(u)]
+        if Spring.ValidUnitID(u) and not Spring.GetUnitIsDead(u) and udef ~= nil then
             -- For some reason, when a unit is dead the squad is not correctly
             -- sanitized, so better checking twice
             table.insert(units, 1, u)
