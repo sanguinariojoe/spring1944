@@ -10,7 +10,7 @@ function widget:GetInfo ()
         date = "18/10/2015",
         license = "MIT X11",
         layer = 1,
-        enabled = true,
+        enabled = false,
     }
 end
 
