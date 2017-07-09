@@ -1,13 +1,13 @@
 function gadget:GetInfo()
-	return {
-		name = "CAMPAIGN",
-		desc = "Campaign gadget",
-		author = "Jose Luis Cercos-Pita",
-		date = "2017-07-7",
-		license = "GNU General Public License v3",
-  		layer = -1,
-		enabled = true,
-	}
+    return {
+        name = "CAMPAIGN",
+        desc = "Campaign gadget",
+        author = "Jose Luis Cercos-Pita",
+        date = "2017-07-7",
+        license = "GNU General Public License v3",
+          layer = -1,
+        enabled = true,
+    }
 end
 
 include("LuaRules/Gadgets/campaign/ai.lua")
@@ -28,22 +28,25 @@ function gadget:GamePreload()
         local gaiaTeamID = Spring.GetGaiaTeamID()
         if teamID ~= gaiaTeamID then
             if not isAI then
-                Spring.Echo("config.teams[1]", teamID)
                 config.teams[1].teamID = teamID
             else
-                Spring.Echo("config.teams", ia_index, teamID)
                 config.teams[ia_index].teamID = teamID
                 ia_index = ia_index + 1
             end
         end
     end
-    -- Set the factions
+end
+
+function gadget:GameStart()
+    -- Set the factions to override game faction picker
     for _, t in ipairs(config.teams) do
         if t.faction then
+            GG.teamSide[t.teamID] = t.faction
             Spring.SetTeamRulesParam(t.teamID, "side", t.faction, {allied=true, public=false}) -- visible to allies only, set visible to all on GameStart
         end
     end    
 end
+
 
 function gadget:GameFrame(f)
     if error_msg then
@@ -52,7 +55,7 @@ function gadget:GameFrame(f)
         return
     end
 
-	if f == 1 then
+    if f == 1 then
         -- Eventually correct the allies
         for _, ti in ipairs(config.teams) do
             for _, tj in ipairs(config.teams) do
@@ -80,13 +83,13 @@ function gadget:GameFrame(f)
             end
         end
     else
-	end
+    end
 
     ai.Update()
 end
 
 function gadget:AllowUnitCreation(unitDefID, builderID, builderTeam, x, y, z)
-	return true
+    return true
 end
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
@@ -128,39 +131,39 @@ local allyTeamID = nil
 --------------------------------------------------------------------------------
 
 local function ChangeAIDebugVerbosity(cmd,line,words,player)
-	local lvl = tonumber(words[1])
-	if lvl then
-		BOT_Debug_Mode = lvl
-		Spring.Echo("CAMPAIGN: debug verbosity set to " .. BOT_Debug_Mode)
-	else
-		if BOT_Debug_Mode > 0 then
-			BOT_Debug_Mode = 0
-		else
-			BOT_Debug_Mode = 1
-		end
-		Spring.Echo("CAMPAIGN: debug verbosity toggled to " .. BOT_Debug_Mode)
-	end
-	return true
+    local lvl = tonumber(words[1])
+    if lvl then
+        BOT_Debug_Mode = lvl
+        Spring.Echo("CAMPAIGN: debug verbosity set to " .. BOT_Debug_Mode)
+    else
+        if BOT_Debug_Mode > 0 then
+            BOT_Debug_Mode = 0
+        else
+            BOT_Debug_Mode = 1
+        end
+        Spring.Echo("CAMPAIGN: debug verbosity toggled to " .. BOT_Debug_Mode)
+    end
+    return true
 end
 
 local function SetupCmdChangeAIDebugVerbosity()
-	local cmd,func,help
-	cmd  = "craig"
-	func = ChangeAIDebugVerbosity
-	help = " [0|1]: make CAMPAIGN shut up or fill your infolog"
-	gadgetHandler:AddChatAction(cmd,func,help)
-	--Script.AddActionFallback(cmd .. ' ',help)
+    local cmd,func,help
+    cmd  = "craig"
+    func = ChangeAIDebugVerbosity
+    help = " [0|1]: make CAMPAIGN shut up or fill your infolog"
+    gadgetHandler:AddChatAction(cmd,func,help)
+    --Script.AddActionFallback(cmd .. ' ',help)
 end
 
 function gadget.Log(...)
-	if BOT_Debug_Mode > 0 then
-		Spring.Echo("CAMPAIGN: " .. table.concat{...})
-	end
+    if BOT_Debug_Mode > 0 then
+        Spring.Echo("CAMPAIGN: " .. table.concat{...})
+    end
 end
 
 -- This is for log messages which can not be turned off (e.g. while loading.)
 function gadget.Warning(...)
-	Spring.Echo("CAMPAIGN: " .. table.concat{...})
+    Spring.Echo("CAMPAIGN: " .. table.concat{...})
 end
 
 local current_mission = nil
@@ -225,19 +228,15 @@ end
 --  gadget:GameStart
 
 function gadget:Initialize()
-	Log("gadget:Initialize")
+    Log("gadget:Initialize")
     --[[
-	setmetatable(gadget, {
-		__index = function() error("Attempt to read undeclared global variable", 2) end,
-		__newindex = function() error("Attempt to write undeclared global variable", 2) end,
-	})
+    setmetatable(gadget, {
+        __index = function() error("Attempt to read undeclared global variable", 2) end,
+        __newindex = function() error("Attempt to write undeclared global variable", 2) end,
+    })
     --]]
-	SetupCmdChangeAIDebugVerbosity()
-end
+    SetupCmdChangeAIDebugVerbosity()
 
-function gadget:GamePreload()
-	-- This is executed BEFORE headquarters / commander is spawned
-	Log("gadget:GamePreload")
     -- Setup the teams
     if #config.teams ~= #Spring.GetTeamList() - 1 then
         error_msg = string.format("Got %d teams, but %d are required", #Spring.GetTeamList(), #config.teams)
@@ -249,30 +248,40 @@ function gadget:GamePreload()
         local gaiaTeamID = Spring.GetGaiaTeamID()
         if teamID ~= gaiaTeamID then
             if not isAI then
-                Spring.Echo("config.teams[1]", teamID)
                 config.teams[1].teamID = teamID
             else
                 if Spring.GetTeamLuaAI(teamID) ~= "Campaign empty bot" then
                     error_msg = string.format("Team %d should be controlled by Campaign empty bot", ia_index - gaia)
                     return
                 end
-                Spring.Echo("config.teams", ia_index, teamID)
                 config.teams[ia_index].teamID = teamID
                 ia_index = ia_index + 1
             end
         end
     end
     -- Get player data
-	local myTeamID = Spring.GetMyTeamID()
-	for _,t in ipairs(Spring.GetTeamList()) do
-	    local teamID, leader, _, isAI = Spring.GetTeamInfo(t)
+    local myTeamID = Spring.GetMyTeamID()
+    for _,t in ipairs(Spring.GetTeamList()) do
+        local teamID, leader, _, isAI = Spring.GetTeamInfo(t)
         if not isAI then
             mainPlayer = leader
         end
         if not isAI and teamID == myTeamID then
             allyTeamID = Spring.GetMyAllyTeamID()
-	    end
+        end
     end
+
+    -- Set the team colors (if available)
+    for _, t in ipairs(config.teams) do
+        if t.color then
+            Spring.SetTeamColor(t.teamID, unpack(t.color))
+        end
+    end
+end
+
+function gadget:GamePreload()
+    -- This is executed BEFORE headquarters / commander is spawned
+    Log("gadget:GamePreload")
 end
 
 function gadget:GameFrame(f)
@@ -508,16 +517,16 @@ end
 
 -- Set up LUA AI framework.
 callInList = {
-	"GamePreload",
-	--"GameStart",
-	"GameFrame",
-	"TeamDied",
-	"UnitCreated",
-	"UnitDamaged",
-	"UnitFinished",
-	"UnitDestroyed",
-	"UnitTaken",
-	"UnitGiven",
-	"UnitIdle",
+    "GamePreload",
+    --"GameStart",
+    "GameFrame",
+    "TeamDied",
+    "UnitCreated",
+    "UnitDamaged",
+    "UnitFinished",
+    "UnitDestroyed",
+    "UnitTaken",
+    "UnitGiven",
+    "UnitIdle",
 }
 return include("LuaRules/Gadgets/campaign/framework.lua")
