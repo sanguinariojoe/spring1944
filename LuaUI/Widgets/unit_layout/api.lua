@@ -31,6 +31,7 @@ function LoadUnits(file, teamID)
                                     0, teamID)
         Spring.SetUnitRotation(u, 0, unit[5], 0)
     end
+    return true
 end
 
 function LoadUnitsUnsynced(file, teamID)
@@ -62,6 +63,7 @@ function LoadUnitsUnsynced(file, teamID)
         Spring.SendCommands("give 1 " .. unit[1] .. " " .. teamID
                      .. " @" .. unit[2] .. "," .. unit[3] .. "," .. unit[4])
     end
+    return true
 end
 
 function SaveUnits(file, teamID)
