@@ -108,6 +108,8 @@ function gadget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
     ai.UnitTaken(unitID, unitDefID, unitTeam, newTeam)
 end
 
+include("LuaUI/Widgets/unit_layout/api.lua")
+
 else
 
 --------------------------------------------------------------------------------
