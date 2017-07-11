@@ -69,7 +69,7 @@ function ai.RelevateLeader(unitID)
         for i=#squad,1,-1 do
             local l = squad[i]
             table.remove(squad, i)
-            if l ~= nil then
+            if l ~= nil and Spring.ValidUnitID(l) and not Spring.GetUnitIsDead(l) then
                 ai.leaders[l] = squad
                 break
             end
