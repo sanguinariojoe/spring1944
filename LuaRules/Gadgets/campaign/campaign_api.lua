@@ -47,7 +47,6 @@ function gadget:GameStart()
     end    
 end
 
-
 function gadget:GameFrame(f)
     if error_msg then
         -- Something went wrong, the bot may not continue working
@@ -369,7 +368,9 @@ function gadget.AfterDelay()
     if delay >= event_delay then
         local command = loadstring(current_mission.events[event_id][2])
         command()
-        current_mission.event_id = event_id + 1
+        if current_mission then
+            current_mission.event_id = event_id + 1
+        end
     end
 end
 
