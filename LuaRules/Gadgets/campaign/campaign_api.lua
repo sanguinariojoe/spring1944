@@ -168,9 +168,15 @@ function gadget.Warning(...)
 end
 
 local current_mission = nil
+local WON_STRING = "Campaign_S44Won"
+local LOST_STRING = "Campaign_S44Lost"
 
 function gadget.Success()
     if current_mission.finish then
+        local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName()
+        if luaMenu then
+            Spring.SendLuaMenuMsg(WON_STRING)
+        end
         GameOver({allyTeamID})
         current_mission = nil
     else
@@ -194,6 +200,10 @@ function gadget.Fail()
                 enemies[#enemies + 1] = alliesID
             end
         end
+    end
+    local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName()
+    if luaMenu then
+        Spring.SendLuaMenuMsg(WON_STRING)
     end
     GameOver(enemies)
     current_mission = nil
