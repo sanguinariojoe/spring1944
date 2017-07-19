@@ -203,7 +203,7 @@ function gadget.Fail()
     end
     local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName()
     if luaMenu then
-        Spring.SendLuaMenuMsg(WON_STRING)
+        Spring.SendLuaMenuMsg(LOST_STRING)
     end
     GameOver(enemies)
     current_mission = nil
