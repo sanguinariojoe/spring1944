@@ -170,10 +170,11 @@ end
 local current_mission = nil
 local WON_STRING = "Campaign_S44Won"
 local LOST_STRING = "Campaign_S44Lost"
+local AWARD_STRING = "Campaign_S44Award"
 
 function gadget.Success()
     if current_mission.finish then
-        local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName()
+        local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName() ~= ""
         if luaMenu then
             Spring.SendLuaMenuMsg(WON_STRING)
         end
@@ -201,7 +202,7 @@ function gadget.Fail()
             end
         end
     end
-    local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName()
+    local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName() ~= ""
     if luaMenu then
         Spring.SendLuaMenuMsg(LOST_STRING)
     end
@@ -434,6 +435,13 @@ function FilterUnitsByName(units, unitName)
         end
     end
     return filtered
+end
+
+function Award(key, img, description)
+    local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName() ~= ""
+    if luaMenu then
+        Spring.SendLuaMenuMsg(AWARD_STRING .. key .. " " .. img .. ":" .. description)
+    end
 end
 
 function gadget.Triggers()
