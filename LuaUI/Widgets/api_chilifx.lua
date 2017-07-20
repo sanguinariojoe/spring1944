@@ -12,8 +12,7 @@ return {
 }
 end
 
-LIBS_DIR = "libs/"
-LCS = loadstring(VFS.LoadFile(LIBS_DIR .. "lcs/LCS.lua"))
+LCS = loadstring(VFS.LoadFile("LuaUI/Widgets/lcs/LCS.lua"))
 LCS = LCS()
 
 CHILILFX_DIR = "LuaUI/Widgets/chilifx/"
