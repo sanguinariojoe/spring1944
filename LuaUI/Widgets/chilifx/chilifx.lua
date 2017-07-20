@@ -362,7 +362,6 @@ end
 -- End public API
 ----------------------------------------
 
---[[
 function ChiliFX:AddFadeEffect(effect)
     local obj = effect.obj
     local time = effect.time
@@ -415,6 +414,7 @@ function ChiliFX:AddFadeEffect(effect)
     obj:Invalidate()
 end
 
+--[[
 function ChiliFX:AddGlowEffect(effect)
     local obj = effect.obj
     local time = effect.time

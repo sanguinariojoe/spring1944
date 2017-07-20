@@ -441,6 +441,7 @@ function Award(key, img, description)
     local luaMenu = Spring.GetMenuName and Spring.SendLuaMenuMsg and Spring.GetMenuName() ~= ""
     if luaMenu then
         Spring.SendLuaMenuMsg(AWARD_STRING .. key .. " " .. img .. ":" .. description)
+        Script.LuaUI.AwardNotification(key, img, description)
     end
 end
 
