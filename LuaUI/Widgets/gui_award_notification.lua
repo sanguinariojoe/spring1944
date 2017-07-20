@@ -83,7 +83,7 @@ function SetupWindow(key, img, description)
 	if not mainWindow.visible then
 		ShowWindow()
 	end
-	showTimer = showPeriod + 2 * fadePeriod
+	showTimer = showPeriod + fadePeriod
 end
 
 function HideWindow()
@@ -169,12 +169,13 @@ function widget:Update(dt)
 		_G["new_award_notification"] = nil
 	end
 
-	if not mainWindow.visible then
+	if not mainWindow.visible or showTimer <= 0 then
 		return
 	end
 
 	showTimer = showTimer - dt
-	if showTimer <= fadePeriod then
+	if showTimer <= 0 then
+		showTimer = 0
 		HideWindow()
 	end
 end
