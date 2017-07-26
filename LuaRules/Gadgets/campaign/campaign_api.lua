@@ -339,6 +339,10 @@ function gadget.DrawLine(x0, y0, z0, x1, y1, z1)
     Spring.MarkerAddLine(x0, y0, z0, x1, y1, z1)
 end
 
+function gadget.MessageByPlayer(msg)
+    Spring.Echo(msg)
+end
+
 function gadget.MessageToPlayer(msg)
     Spring.Echo(msg)
 end
