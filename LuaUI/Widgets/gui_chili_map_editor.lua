@@ -19,20 +19,18 @@ local winTitle
 local minimizedButton, minimizedButtonImage
 local moveButton, moveButtonImage
 
-local function clearWinChildren()
-	window_editor.children = {winTitle, minimizedButton, moveButton}
-end
+tools_win = include("LuaUI/Widgets/map_editor/tools.lua")
+local active_win = tools_win
 
-local collapsed = true
+local collapsed = false
 local function SwapCollapsed()
 	if collapsed then
 		minimizedButtonImage.file = 'LuaUI/Images/arrowhead.png'
+		active_win.show()
 		minimizedButtonImage:Invalidate()
 	else
 		minimizedButtonImage.file = 'LuaUI/Images/arrowhead_flipped.png'
-		clearWinChildren()
-		window_editor:SetPos(window_editor.x, window_editor.y,
-		                     window_editor.width, 32)
+		active_win.hide()
 		minimizedButtonImage:Invalidate()
 	end
 	collapsed = not collapsed
@@ -116,7 +114,7 @@ function widget:Initialize()
 		height = win_button_inputsize - 2,
 		keepAspect = true,
 		--color = {0.7,0.7,0.7,0.4},
-		file = 'LuaUI/Images/arrowhead_flipped.png',
+		file = 'LuaUI/Images/arrowhead.png',
 	}
 	minimizedButton = WG.Chili.Button:New{
 		parent=window_editor,
@@ -154,7 +152,9 @@ function widget:Initialize()
 		OnMouseUp = {StopDragging},
 		children={ moveButtonImage },
 	}
-    --]]
+    
+	tools_win.init(window_editor)
+	tools_win.show()
 end
 
 -----------------------------------------------------------------------
