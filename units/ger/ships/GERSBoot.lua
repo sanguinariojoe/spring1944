@@ -8,9 +8,9 @@ local GER_SBoot = ArmedBoat:New{
 	collisionVolumeScales	= [[40.0 20.0 260.0]],
 	maxDamage				= 9070,
 	maxReverseVelocity		= 3.005,
-	maxVelocity				= 6.01,
+	maxVelocity				= 4,68, -- 39kn
 	transportCapacity		= 2, -- 2 x 1fpu turrets
-	turnRate				= 205,	
+	turnRate				= 65,	
 	weapons = {
 		[1] = {
 			name				= "flak3820mmhe",
@@ -50,7 +50,7 @@ local GER_SBoot_Turret_20mm_Front = OpenBoatTurret:New{
 		},
 	},
 	customparams = {
-		maxammo					= 14,
+		maxammo					= 10,
 
 		barrelrecoildist		= 4,
 		barrelrecoilspeed		= 20,

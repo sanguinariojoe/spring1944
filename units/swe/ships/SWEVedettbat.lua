@@ -3,17 +3,17 @@ local SWE_Vedettbat = ArmedBoat:New{
 	description				= "Sea-going patrol vessel",
 	acceleration			= 0.025,
 	brakeRate				= 0.01,
-	buildCostMetal			= 3400,
+	buildCostMetal			= 3035,
 	collisionVolumeOffsets	= [[0.0 -16.0 0.0]],
 	collisionVolumeScales	= [[35.0 10.0 240.0]],
 	maxDamage				= 10400,
 	maxReverseVelocity		= 1.79,
 	maxVelocity				= 3.59,
 	transportCapacity		= 3,
-	turnRate				= 240,	
+	turnRate				= 70,	
 	weapons = {	
 		[1] = {
-			name				= "QF6Pdr57MkIIAHE",
+			name				= "SWE_57mmM95",
 		},
 	},
 
