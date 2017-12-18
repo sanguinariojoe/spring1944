@@ -11,38 +11,33 @@ function gadget:GetInfo()
 end
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
 
--- synced only
 if (not gadgetHandler:IsSyncedCode()) then
 	return false
 end
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
 
--- localisations
 -- SyncedRead
-local GetFeaturesInRectangle	= Spring.GetFeaturesInRectangle
-local GetGroundHeight			= Spring.GetGroundHeight
-local GetSideData				= Spring.GetSideData
-local GetTeamInfo				= Spring.GetTeamInfo
-local GetTeamRulesParam			= Spring.GetTeamRulesParam
-local GetTeamStartPosition		= Spring.GetTeamStartPosition
-local GetTeamUnits				= Spring.GetTeamUnits -- backwards compat
-local GetUnitDefID				= Spring.GetUnitDefID
-local GetUnitPosition			= Spring.GetUnitPosition
-local GetUnitsInCylinder		= Spring.GetUnitsInCylinder
-local TestBuildOrder			= Spring.TestBuildOrder
-local TestMoveOrder				= Spring.TestMoveOrder
-local GetPlayerInfo				= Spring.GetPlayerInfo
-local GetGameFrame				= Spring.GetGameFrame
+local GetFeaturesInRectangle = Spring.GetFeaturesInRectangle
+local GetGroundHeight = Spring.GetGroundHeight
+local GetSideData = Spring.GetSideData
+local GetTeamInfo = Spring.GetTeamInfo
+local GetTeamRulesParam	= Spring.GetTeamRulesParam
+local GetTeamStartPosition = Spring.GetTeamStartPosition
+local GetTeamUnits = Spring.GetTeamUnits -- backwards compat
+local GetUnitDefID = Spring.GetUnitDefID
+local GetUnitPosition = Spring.GetUnitPosition
+local GetUnitsInCylinder = Spring.GetUnitsInCylinder
+local TestBuildOrder = Spring.TestBuildOrder
+local TestMoveOrder = Spring.TestMoveOrder
+local GetPlayerInfo = Spring.GetPlayerInfo
+local GetGameFrame = Spring.GetGameFrame
 -- SyncedCtrl
-local CreateUnit				= Spring.CreateUnit
-local DestroyFeature			= Spring.DestroyFeature
-local SetTeamResource			= Spring.SetTeamResource
-local SetTeamRulesParam			= Spring.SetTeamRulesParam
-
+local CreateUnit = Spring.CreateUnit
+local DestroyFeature = Spring.DestroyFeature
+local SetTeamResource = Spring.SetTeamResource
+local SetTeamRulesParam	= Spring.SetTeamRulesParam
 
 -- constants
 -- Each time an invalid position is randomly chosen, spread is multiplied by SPREAD_MULT.
@@ -60,14 +55,17 @@ local SPREAD_MULT = 1.02
 local CLEARANCE = 125
 -- Minimum distance bewteen each unit and the spawn center (HQ position)
 local HQ_CLEARANCE = 200
-local HALF_MAP_X = Game.mapSizeX/2
-local HALF_MAP_Z = Game.mapSizeZ/2
+local HALF_MAP_X = Game.mapSizeX / 2
+local HALF_MAP_Z = Game.mapSizeZ / 2
 local STARTING_LOGISTICS = 1040 + 1 -- Add 1 storage so losing all storage buildings doesn't cause everything to cease working
 
 local hqDefs = VFS.Include("LuaRules/Configs/hq_spawn.lua")
 local modOptions = Spring.GetModOptions()
 
 local AIUnitReplacementTable = {}
+
+local TeamSpawnPositions = {}
+local TeamSpawnFuncs = {} -- Allows gadgets to specifiy their own custom spawning function trough GG.S44_Spawn.SetSpawnFunc(teamID)
 
 local function IsPositionValid(teamID, unitDefID, x, z)
 	-- Don't place units underwater. (this is also checked by TestBuildOrder
@@ -108,7 +106,7 @@ local function ClearUnitPosition(unitID)
 	local ud = UnitDefs[unitDefID]
 	
 	local px, py, pz = GetUnitPosition(unitID)
-	local sideLength = math.max(ud.xsize, ud.zsize) * 7 -- why 14/2?
+	local sideLength = math.max(ud.xsize, ud.zsize) * 7
 	local xmin = px - sideLength
 	local xmax = px + sideLength
 	local zmin = pz - sideLength
@@ -140,9 +138,9 @@ local function SpawnBaseUnits(teamID, startUnit, px, pz)
 					-- hack to make soviet AIs spawn with static storage instead of deployable truck
 					-- and possibly other AI-specific units
 					-- facing toward map center
-		local facing=math.abs(HALF_MAP_X - x) > math.abs(HALF_MAP_Z - z)
-			and ((x > HALF_MAP_X) and "west" or "east")
-			or ((z > HALF_MAP_Z) and "north" or "south")
+					local facing = math.abs(HALF_MAP_X - x) > math.abs(HALF_MAP_Z - z)
+						and ((x > HALF_MAP_X) and "west" or "east")
+						or ((z > HALF_MAP_Z) and "north" or "south")
 					if AIUnitReplacementTable[unitName] and isLuaAITeam then
 						unitName = AIUnitReplacementTable[unitName]
 					end
@@ -165,7 +163,7 @@ local function GetStartUnit(teamID)
 		-- startscript didn't specify a side for this team
 		local sidedata = GetSideData()
 		if (sidedata and #sidedata > 0) then
-			local sideNum = math.random(2,#GetSideData()) --2 + teamID % #sidedata
+			local sideNum = math.random(2, #GetSideData()) --2 + teamID % #sidedata
 			startUnit = sidedata[sideNum].startUnit
 			side = sidedata[sideNum].sideName
 		end
@@ -176,7 +174,7 @@ local function GetStartUnit(teamID)
 	end
 	-- Check for GM / Random team
 	if startUnit == "gmtoolbox" then
-		local randSide = math.random(2,#GetSideData())	-- start at 2 to avoid picking random side again
+		local randSide = math.random(2, #GetSideData())	-- start at 2 to avoid picking random side again
 		if (modOptions.gm_team_enable == "0") then
 			side, startUnit = GetSideData(randSide)
 		else
@@ -191,12 +189,12 @@ end
 local function SpawnStartUnit(teamID)
 	local startUnit = GetStartUnit(teamID)
 	if (startUnit and startUnit ~= "") then
-		-- spawn the specified start unit
-		local x,y,z = GetTeamStartPosition(teamID)
+		local pos = TeamSpawnPositions[teamID]
+		local x, z = pos[0], pos[2]
 		-- Erase start position marker while we're here
 		Spring.MarkerErasePosition(x or 0, y or 0, z or 0)
 		-- snap to 16x16 grid
-		x, z = 16*math.floor((x+8)/16), 16*math.floor((z+8)/16)
+		x, z = 16 * math.floor((x + 8) / 16), 16 * math.floor((z + 8) / 16)
 		y = GetGroundHeight(x, z)
 		-- facing toward map center
 		local facing=math.abs(HALF_MAP_X - x) > math.abs(HALF_MAP_Z - z)
@@ -221,6 +219,33 @@ local function SetStartResources(teamID)
 	SetTeamResource(teamID, "m", 1000)
 end
 
+local function GetStartPos(teamID)
+	return TeamSpawnPositions[teamID]
+end
+
+local function SetStartPos(teamID, x, y, z)
+	if type(x) ~= "number" or x < 0 then
+		Spring.Echo(tostring(x) .. " is not a valid start position for GG.S44_Spawn.SetStartPos.")
+		return
+	end
+	if type(y) ~= "number" or y < 0 then
+		Spring.Echo(tostring(y) .. " is not a valid start position for GG.S44_Spawn.SetStartPos.")
+		return
+	end
+	if type(z) ~= "number" or z < 0 then
+		Spring.Echo(tostring(z) .. " is not a valid start position for GG.S44_Spawn.SetStartPos.")
+		return
+	end
+	TeamSpawnPositions[teamID] = {x, y, z}
+end
+
+local function SetSpawnFunc(teamID, func)
+	if type(func) ~= "function" then
+		error("Invalid spawing function to game_setup.lua provided")
+	end
+	TeamSpawnFuncs[teamID] = func
+end
+
 local function InitAIUnitReplacementTable()
 	Spring.Log('game setup', 'info', "Loading AI unit replacement tables...")
 	local SideFiles = VFS.DirList("luarules/configs/side_ai_unit_replacement", "*.lua")
@@ -243,24 +268,26 @@ end
 
 function gadget:Initialize()
 	GG.teamSide = {}
-	local teams = Spring.GetTeamList()
-	for i = 1,#teams do
-		local teamID = teams[i]
-		-- don't spawn a start unit for the Gaia team
+	for _, teamID in ipairs(Spring.GetTeamList()) do
 		if (teamID ~= gaiaTeamID) then
+			local x, y, z = GetTeamStartPosition(teamID)
+			TeamSpawnPositions[teamID] = {x, y, z}
+			TeamSpawnFuncs[teamID] = SpawnStartUnit -- Set default for overrideable spawning function
 			local side = GetTeamRulesParam(teamID, "side")
 			if side then
 				GG.teamSide[teamID] = side
 			else
 				GG.teamSide[teamID] = ""
 			end
+		else
+			TeamSpawnPositions[teamID] = {HALF_MAP_X, 0, HALF_MAP_Z}
+			TeamSpawnFuncs[teamID] = function(t) return end
 		end
 	end
 end
 
 function gadget:GameStart()
 	local gaiaTeamID = Spring.GetGaiaTeamID()
-	local teams = Spring.GetTeamList()
 
 	InitAIUnitReplacementTable()
 
@@ -268,14 +295,10 @@ function gadget:GameStart()
 	--it is not trivial to find out the side of a team using Spring's API.
 	-- data set in GetStartUnit function. NB. The only use for this currently is flags
 
-	-- spawn start units
-	for i = 1,#teams do
-		local teamID = teams[i]
-		-- don't spawn a start unit for the Gaia team
-		if (teamID ~= gaiaTeamID) then
-			SpawnStartUnit(teamID)
-			SetStartResources(teamID)
-		end
+	for _, teamID in ipairs(Spring.GetTeamList()) do
+		local SpawnFunc = TeamSpawnFuncs[teamID]
+		SpawnFunc(teamID)
+		SetStartResources(teamID)
 	end
 	-- not needed after spawning everyone
 	GG.RemoveGadget(self)
@@ -301,3 +324,10 @@ function gadget:RecvLuaMsg(msg, playerID)
 		return true
 	end
 end
+
+GG.S44_Spawn = {GetStartUnit = GetStartUnit,
+		IsPositionValid = IsPositionValid,
+		GetStartPos = GetStartPos,
+		SetStartPos = SetStartPos,
+		SetSpawnFunc = SetSpawnFunc,
+}
