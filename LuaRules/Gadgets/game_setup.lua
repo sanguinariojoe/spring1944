@@ -194,7 +194,7 @@ local function SpawnStartUnit(teamID)
 			SetStartPos(teamID, x, y, z)
 		end
 		local pos = TeamSpawnPositions[teamID]
-		local x, z = pos[0], pos[2]
+		local x, z = pos[1], pos[3]
 		-- Erase start position marker while we're here
 		Spring.MarkerErasePosition(x or 0, y or 0, z or 0)
 		-- snap to 16x16 grid
