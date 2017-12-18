@@ -224,7 +224,7 @@ local function SetStartResources(teamID)
 end
 
 local function GetStartPos(teamID)
-	return TeamSpawnPositions[teamID]
+	return unpack(TeamSpawnPositions[teamID])
 end
 
 local function SetStartPos(teamID, x, y, z)
