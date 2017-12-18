@@ -189,6 +189,10 @@ end
 local function SpawnStartUnit(teamID)
 	local startUnit = GetStartUnit(teamID)
 	if (startUnit and startUnit ~= "") then
+		if TeamSpawnPositions[teamID] == nil then
+			local x, y, z = GetTeamStartPosition(teamID)
+			SetStartPos(teamID, x, y, z)
+		end
 		local pos = TeamSpawnPositions[teamID]
 		local x, z = pos[0], pos[2]
 		-- Erase start position marker while we're here
