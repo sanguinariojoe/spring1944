@@ -43,7 +43,8 @@ local SetUnitVelocity = Spring.SetUnitVelocity
 local AddTeamResource = Spring.AddTeamResource
 local UseTeamResource = Spring.UseTeamResource
 local GetTeamResources = Spring.GetTeamResources
-local GetTeamStartPosition = Spring.GetTeamStartPosition
+-- local GetTeamStartPosition = Spring.GetTeamStartPosition
+local GetTeamStartPosition  -- GG.S44_Spawn.GetStartPos, not ready yet to be assigned
 local GetUnitCmdDescs = Spring.GetUnitCmdDescs
 local EditUnitCmdDesc = Spring.EditUnitCmdDesc
 local InsertUnitCmdDesc = Spring.InsertUnitCmdDesc
@@ -396,6 +397,8 @@ local function ModifyStockpile(teamID, sortie, amount)
 end
 
 function gadget:Initialize()
+	GetTeamStartPosition = GG.S44_Spawn.GetStartPos
+
 	vNormalized = GG.Vector.Normalized
 	vRotateY = GG.Vector.RotateY
 	vClampToMapSize = GG.Vector.ClampToMapSize
