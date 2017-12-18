@@ -18,7 +18,7 @@ end
 function gadget:Initialize ()
     for _, t in ipairs (Spring.GetTeamList ()) do
         local isAI = select (4, Spring.GetTeamInfo (t))
-        if isAI and Spring.GetTeamLuaAI (t) == "spammer" then
+        if isAI and Spring.GetTeamLuaAI (t) == "Spammer" then
             GG.S44_Spawn.SetSpawnFunc(t, function(t) return end)
         end
     end
