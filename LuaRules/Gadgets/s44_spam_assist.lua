@@ -15,6 +15,10 @@ function gadget:GetInfo ()
     }
 end
 
+if (not gadgetHandler:IsSyncedCode ()) then
+    return false
+end
+
 function gadget:Initialize ()
     for _, t in ipairs (Spring.GetTeamList ()) do
         local isAI = select (4, Spring.GetTeamInfo (t))
