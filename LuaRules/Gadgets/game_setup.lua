@@ -300,9 +300,11 @@ function gadget:GameStart()
 	-- data set in GetStartUnit function. NB. The only use for this currently is flags
 
 	for _, teamID in ipairs(Spring.GetTeamList()) do
-		local SpawnFunc = TeamSpawnFuncs[teamID]
-		SpawnFunc(teamID)
-		SetStartResources(teamID)
+		if (teamID ~= gaiaTeamID) then
+			local SpawnFunc = TeamSpawnFuncs[teamID]
+			SpawnFunc(teamID)
+			SetStartResources(teamID)
+		end
 	end
 	-- not needed after spawning everyone
 	GG.RemoveGadget(self)
