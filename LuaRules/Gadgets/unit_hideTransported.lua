@@ -105,8 +105,8 @@ function gadget:UnitLoaded(unitID, unitDefID, unitTeam, transportID, transportTe
 		if massLeft[transportID] == 0 then
 			TransportIsFull(transportID)
 		end
-		if unitDef.xsize == 2 and not (transportDef.minWaterDepth > 0) and not unitDef.customParams.hasturnbutton then 
-			-- transportee is Footprint of 1 (doubled by engine) and transporter is not a boat and transportee is not an infantry gun
+		if unitDef.xsize == 2 and not (transportDef.minWaterDepth > 0) and not transportDef.customParams.garrison and not unitDef.customParams.hasturnbutton then 
+			-- transportee is Footprint of 1 (doubled by engine) and transporter is not a boat nor a garrison and transportee is not an infantry gun
 			SetUnitNoDraw(unitID, true)
 			SetUnitNeutral(unitID, true)
 			StoreLOSRadius(unitID, unitDefID)
@@ -166,7 +166,7 @@ function gadget:UnitUnloaded(unitID, unitDefID, teamID, transportID)
 	local transportDef = UnitDefs[GetUnitDefID(transportID)]
 	local unitDef = UnitDefs[unitDefID]
 	massLeft[transportID] = massLeft[transportID] + unitDef.mass
-	if unitDef.xsize == 2 and not (transportDef.minWaterDepth > 0) and not unitDef.customParams.hasturnbutton then 
+	if unitDef.xsize == 2 and not (transportDef.minWaterDepth > 0) and not transportDef.customParams.garrison and not unitDef.customParams.hasturnbutton then 
 		SetUnitNoDraw(unitID, false)
 		SetUnitNeutral(unitID, false)
 		RestoreLOSRadius(unitID, unitDefID)

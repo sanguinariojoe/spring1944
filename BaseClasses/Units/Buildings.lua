@@ -390,6 +390,33 @@ local SuppliesSmall = Supplies:New{
 	yardmap						= [[yyy yyy yyy]],
 }
 
+local Garrison = Building:New{
+	name				= "Garrison",
+	description			= "Infantry Fortress",
+	script				= "Garrison.lua",
+	buildCostMetal		= 10000, -- (OLD) GBR 2340, GER 2140, ITA 1500, JPN 1500, RUS 1500, US 2300
+	explodeAs			= "Med_Explosion", -- override Yard
+	iconType			= "garrison", -- override Yard
+	idleAutoHeal		= 10, -- engine default, override Yard
+	loadingRadius		= 100000,
+	releaseHeld			= false,
+	transportCapacity	= 1,
+	transportMass		= 50,
+	transportSize		= 1,
+	unloadSpread		= 10,
+	isFirePlatform		= true,
+	holdSteady			= true,
+	usePieceCollisionVolumes	= true,
+	customParams = {
+		garrison				= true,
+		separatebuildspot		= true,
+		wiki_subclass_comments = [[Garrisons are buildings that can be occupied
+by infantry as a fortress. Garrisoned soldiers enjoys an increased strenght.
+As drawback, Garrisoned soldiers can't move, and have a quite limited fire
+angle.]],
+	},
+}
+
 return {
 	Building = Building,
 	-- Yards
@@ -414,4 +441,5 @@ return {
 	Storage = Storage,
 	Supplies = Supplies,
 	SuppliesSmall = SuppliesSmall,
+	Garrison = Garrison,
 }

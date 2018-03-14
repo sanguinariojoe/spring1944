@@ -269,6 +269,11 @@ local iconTypes = {
         size     = 4,
         distance = 0.3,
     },
+    garrison = {
+        bitmap   = "icons/guard.tga",
+        size     = 4,
+        distance = 0.3,
+    },
     flag = {
         bitmap   = "icons/flag.tga",
         size     = 2.5,
