@@ -397,7 +397,9 @@ local Garrison = Building:New{
 	buildCostMetal		= 10000, -- (OLD) GBR 2340, GER 2140, ITA 1500, JPN 1500, RUS 1500, US 2300
 	explodeAs			= "Med_Explosion", -- override Yard
 	iconType			= "garrison", -- override Yard
-	idleAutoHeal		= 10, -- engine default, override Yard
+	canSelfDestruct		= false,
+	corpse				= '',
+	idleAutoHeal		= 0, -- engine default, override Yard
 	loadingRadius		= 100000,
 	releaseHeld			= false,
 	transportCapacity	= 1,
@@ -407,6 +409,11 @@ local Garrison = Building:New{
 	isFirePlatform		= true,
 	holdSteady			= true,
 	usePieceCollisionVolumes	= true,
+	sfxtypes = {
+		explosionGenerators = {
+			[1] = "custom:burning",
+		},
+	},
 	customParams = {
 		garrison				= true,
 		separatebuildspot		= true,
