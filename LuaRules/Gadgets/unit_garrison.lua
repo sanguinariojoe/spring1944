@@ -16,7 +16,25 @@ if (gadgetHandler:IsSyncedCode()) then -- SYNCED
 -- Constants
 local MIN_HEALTH = 1 -- No fewer HP than this
 local HEALTH_RESTORE_LEVEL = 0.5 -- What % of maxHP to restore garrison function
+local UNITNAME = "garrison_housemansion"
+local MAP_WIDTH = Game.mapSizeX
+local MAP_HEIGHT = Game.mapSizeZ
 local disabledGarrisons = {}  -- disabledGarrisons[unitID] = true/nil
+
+function SpawnGarrison(x, z)
+    local unitID = Spring.CreateUnit(UNITNAME, x, 0, z, 0, Spring.GetGaiaTeamID())
+    Spring.SetUnitNeutral(unitID, true)
+    Spring.SetUnitAlwaysVisible(unitID, true)
+end
+
+function gadget:Initialize()
+    local modOptions = Spring.GetModOptions()
+    if modOptions.garrison then
+        local x = MAP_WIDTH * modOptions.garrisonx / 100
+        local z = MAP_HEIGHT * modOptions.garrisony / 100
+        SpawnGarrison(x, z)
+    end
+end
 
 function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID, attackerDefID, attackerTeam)
     local udef = UnitDefs[unitDefID]

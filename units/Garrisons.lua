@@ -9,7 +9,6 @@ local HouseMansion_garrison = Garrison:New{
     transportCapacity = 40,
     transportMass     = 2000,
     customParams = {
-        mod       = true,
         normaltex = "unittextures/FeaturesHouseMansion_normals.png",
     },
 }
