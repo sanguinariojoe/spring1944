@@ -43,8 +43,10 @@ local function DisabledSmoke()
             for _, fire in pairs(fires) do
                 EmitSfx(fire, SFX.CEG + 1)
             end
+            Sleep(16384)
+        else
+            Sleep(500)
         end
-        Sleep(16384)
     end
 end
 
