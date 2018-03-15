@@ -27,6 +27,7 @@ function gadget:UnitPreDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, w
     local health = Spring.GetUnitHealth(unitID)
     if health - damage < MIN_HEALTH then
         local newDamage = health - MIN_HEALTH
+        Spring.SetUnitNeutral(unitID, true)
         local env = Spring.UnitScript.GetScriptEnv(unitID)
         Spring.UnitScript.CallAsUnit(unitID, env.Disabled, true)
         disabledGarrisons[unitID] = true
@@ -41,6 +42,7 @@ function gadget:GameFrame(n)
             if disabled then
                 local health, maxHealth = Spring.GetUnitHealth(unitID)
                 if health / maxHealth > HEALTH_RESTORE_LEVEL then
+                    Spring.SetUnitNeutral(unitID, false)
                     local env = Spring.UnitScript.GetScriptEnv(unitID)
                     Spring.UnitScript.CallAsUnit(unitID, env.Disabled, false)
                 end
