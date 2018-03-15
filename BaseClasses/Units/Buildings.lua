@@ -416,7 +416,7 @@ local Garrison = Building:New{
 	},
 	customParams = {
 		garrison				= true,
-		capRadius				= 500,  -- 2 x loadingRadius
+		capradius				= 500,  -- 2 x loadingRadius
 		wiki_subclass_comments = [[Garrisons are buildings that can be occupied
 by infantry as a fortress. Garrisoned soldiers enjoys an increased strenght.
 As drawback, Garrisoned soldiers can't move, and have a quite limited fire
