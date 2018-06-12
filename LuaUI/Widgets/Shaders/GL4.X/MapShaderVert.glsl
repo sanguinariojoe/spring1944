@@ -2,8 +2,9 @@
 
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
+#define SMF_CLIP_PLANE_IDX 2
 
-uniform ivec2 texSquare;
+uniform ivec2 texSquare;     // Provided by default by spring
 uniform vec3 cameraPos;
 uniform vec4 lightDir;       // mapInfo->light.sunDir
 uniform vec3 fogParams;      // .x := start, .y := end, .z := viewrange
@@ -25,26 +26,26 @@ out float fogFactor;
 
 
 void main() {
-	// vec4 viewDir = viewMatInv * vec4(0.0, 0.0, 0.0, 1.0);
-	vec4 viewDir = vec4(cameraPos, 1.0);
+    // vec4 viewDir = viewMatInv * vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 viewDir = vec4(cameraPos, 1.0);
 
-	viewDir.xyz = normalize(viewDir.xyz - vertexPosAttr);
-	halfDir.xyz = normalize(lightDir.xyz + viewDir.xyz);
+    viewDir.xyz = normalize(viewDir.xyz - vertexPosAttr);
+    halfDir.xyz = normalize(lightDir.xyz + viewDir.xyz);
 
-	vertexPos = vec4(vertexPosAttr, 1.0);
-	diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - texSquare;
+    vertexPos = vec4(vertexPosAttr, 1.0);
+    diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - texSquare;
 
-	gl_Position = viewProjMat * vertexPos;
-	gl_ClipDistance[SMF_CLIP_PLANE_IDX] = dot(clipPlane, vertexPos);
+    gl_Position = viewProjMat * vertexPos;
+    gl_ClipDistance[SMF_CLIP_PLANE_IDX] = dot(clipPlane, vertexPos);
 
-	{
-		float eyeDepth = length((viewMat * vertexPos).xyz);
-		float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
-		float fogDepth = (eyeDepth - fogParams.x * fogParams.z) / fogRange;
-		// float fogDepth = (fogParams.y * fogParams.z - eyeDepth) / fogRange;
+    {
+        float eyeDepth = length((viewMat * vertexPos).xyz);
+        float fogRange = (fogParams.y - fogParams.x) * fogParams.z;
+        float fogDepth = (eyeDepth - fogParams.x * fogParams.z) / fogRange;
+        // float fogDepth = (fogParams.y * fogParams.z - eyeDepth) / fogRange;
 
-		fogFactor = 1.0 - clamp(fogDepth, 0.0, 1.0);
-		// fogFactor = clamp(fogDepth, 0.0, 1.0);
-	}
+        fogFactor = 1.0 - clamp(fogDepth, 0.0, 1.0);
+        // fogFactor = clamp(fogDepth, 0.0, 1.0);
+    }
 }
 

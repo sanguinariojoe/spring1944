@@ -12,8 +12,20 @@ end
 
 local glCreateShader = gl.CreateShader
 local glGetShaderLog = gl.GetShaderLog
+local glGetUniformLocation = gl.GetUniformLocation
+local glUseShader = gl.UseShader
+local glGetMatrixData = gl.GetMatrixData
+local glUniform = gl.Uniform
+local glUniformMatrix = gl.UniformMatrix
+local glGetSun = gl.GetSun
+local glGetAtmosphere = gl.GetAtmosphere
+local glGetMapRendering = gl.GetMapRendering
+local SetMapShader = Spring.SetMapShader
+local GetCameraPosition = Spring.GetCameraPosition
 
 local shader
+local cameraPosID, lightDirID, fogParamsID, clipPlaneID, viewMatID, viewMatInvID
+local viewProjMatID
 
 function widget:Initialize()
     if not Script.IsEngineMinVersion or not Script.IsEngineMinVersion(104,0,1) then
@@ -24,7 +36,7 @@ function widget:Initialize()
     end
 
     shader = glCreateShader({
-        -- vertex = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\MapShaderVert.glsl", VFS.ZIP),
+        vertex = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\MapShaderVert.glsl", VFS.ZIP),
         fragment = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\MapShaderFrag.glsl", VFS.ZIP),
         uniformInt = {},
     })
@@ -36,22 +48,76 @@ function widget:Initialize()
         return
     end
 
-    Spring.SetMapShader(shader, 0)
+    SetMapShader(shader, 0)
 end
 
 function widget:Shutdown()
-    Spring.SetMapShader(0, 0)
+    SetMapShader(0, 0)
+end
+
+local function GetViewRange()
+    local m22 = glGetMatrixData(GL.PROJECTION, 10)
+    local m32 = glGetMatrixData(GL.PROJECTION, 14)
+    local near = (2.0 * m32) / (2.0 * m22 - 2.0)
+    local far = ((m22 - 1.0) * near) / (m22 + 1.0)
+    return far
 end
 
 function widget:DrawWorld()
-    -- gl.UseShader(shader)
-    -- if not timeID then
-    --     timeID         = gl.GetUniformLocation(shader, "time")
-    --     pointsID       = gl.GetUniformLocation(shader, "points")
-    --     pointSizeID    = gl.GetUniformLocation(shader, "pointSize")
-    -- end
-    -- gl.Uniform(     timeID,       os.clock())
-    -- gl.UniformInt(  pointSizeID,  #points/3)
-    -- gl.UniformArray(pointsID,     1, points)
-    -- gl.UseShader(0)
+    local x, y, z
+
+    glUseShader(shader)
+
+    if not cameraPosID then
+        cameraPosID = glGetUniformLocation(shader, "cameraPos")
+        lightDirID = glGetUniformLocation(shader, "lightDir")
+        fogParamsID = glGetUniformLocation(shader, "fogParams")
+        clipPlaneID = glGetUniformLocation(shader, "clipPlane")
+        viewMatID = glGetUniformLocation(shader, "viewMat")
+        viewMatInvID = glGetUniformLocation(shader, "viewMatInv")
+        viewProjMatID = glGetUniformLocation(shader, "viewProjMat")
+    end
+
+    x, y, z = GetCameraPosition()
+    glUniform(cameraPosID, x, y, z)
+    x, y, z = glGetSun()
+    glUniform(lightDirID, x, y, z, 0.0)
+    glUniform(fogParamsID, glGetAtmosphere("fogStart"),
+                           glGetAtmosphere("fogEnd"),
+                           GetViewRange())
+    glUniform(clipPlaneID, 0.0, 0.0, 0.0, 0.0)
+    glUniformMatrix(viewMatID, "view")
+    glUniformMatrix(viewMatInvID, "viewinverse")
+    glUniformMatrix(viewProjMatID, "viewprojection")
+    
+    glUseShader(0)
+end
+
+function widget:DrawWorldReflection()
+    local x, y, z, w
+
+    glUseShader(shader)
+
+    if not clipPlaneID then
+        clipPlaneID = glGetUniformLocation(shader, "clipPlane")
+    end
+
+    glUniform(clipPlaneID, 0.0,  1.0, 0.0, 5.0)
+    
+    glUseShader(0)
+end
+
+function widget:DrawWorldRefraction()
+    local x, y, z, w
+
+    glUseShader(shader)
+
+    if not clipPlaneID then
+        clipPlaneID = glGetUniformLocation(shader, "clipPlane")
+    end
+
+    glUniform(clipPlaneID, 0.0, -1.0, 0.0, 5.0)
+    
+    
+    glUseShader(0)
 end
