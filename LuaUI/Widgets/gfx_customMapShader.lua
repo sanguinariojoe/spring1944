@@ -24,8 +24,8 @@ function widget:Initialize()
     end
 
     shader = glCreateShader({
-        -- vertex = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\mapshader.vs", VFS.ZIP),
-        fragment = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\mapshader.fs", VFS.ZIP),
+        -- vertex = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\MapShaderVert.glsl", VFS.ZIP),
+        fragment = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL4.X\\MapShaderFrag.glsl", VFS.ZIP),
         uniformInt = {},
     })
     if not shader then
