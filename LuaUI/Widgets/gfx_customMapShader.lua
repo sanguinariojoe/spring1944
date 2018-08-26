@@ -10,39 +10,17 @@ function widget:GetInfo()
    }
 end
 
-local glCreateShader       = gl.CreateShader
-local glGetShaderLog       = gl.GetShaderLog
-local glGetUniformLocation = gl.GetUniformLocation
-local glUseShader          = gl.UseShader
-local glGetMatrixData      = gl.GetMatrixData
-local glUniform            = gl.Uniform
-local glUniformMatrix      = gl.UniformMatrix
-local glTexture            = gl.Texture
-local glGetSun             = gl.GetSun
-local glGetAtmosphere      = gl.GetAtmosphere
-local glGetMapRendering    = gl.GetMapRendering      -- >= 104.0
-local glGetWaterRendering  = gl.GetWaterRendering  -- >= 104.0
+
+local glCreateShader    = gl.CreateShader
+local glGetShaderLog    = glGetShaderLog
+local glGetMapRendering = gl.GetMapRendering    -- >= 104.0
 local SetMapShader      = Spring.SetMapShader
-local GetCameraPosition = Spring.GetCameraPosition
 local HaveShadows       = Spring.HaveShadows
-local GetMapDrawMode    = Spring.GetMapDrawMode
+
 
 local srcs = {vertex=nil, fragment=nil}
 local srcsDeferred = {vertex=nil, fragment=nil}
 local shader, shaderDeferred
-local cameraPosID, lightDirID
-local mapSizePO2ID, mapSizeID, groundAmbientColorID, groundDiffuseColorID
-local groundSpecularColorID, groundSpecularExponentID, groundShadowDensityID
-local waterMinColorID, waterBaseColorID, waterAbsorbColorID
-local splatTexScalesID, splatTexMultsID, infoTexIntensityMulID
-local normalTexGenID, specularTexGenID, infoTexGenID
-
-
-local GRID_SIZE = Game.squareSize
-local MAP_WIDTH = Game.mapSizeX
-local MAP_HEIGHT = Game.mapSizeZ
-local MAP_WIDTHPO2 = math.ceil(math.log(MAP_WIDTH / GRID_SIZE)) ^ 2 * GRID_SIZE
-local MAP_HEIGHTPO2 = math.ceil(math.log(MAP_HEIGHT / GRID_SIZE)) ^ 2 * GRID_SIZE
 
 
 local function CompileShader(deferred, forced)
@@ -134,6 +112,8 @@ local function CompileShader(deferred, forced)
         vertex = vertex,
         fragment = fragment,
     })
+
+
     return shader
 end
 
@@ -142,7 +122,7 @@ function widget:Initialize()
     if not shader then
         Spring.Log("Map shader", "error",
                    "Failed to create map shader!")
-        Spring.Echo(gl.GetShaderLog())
+        Spring.Echo(glGetShaderLog())
         widgetHandler:RemoveWidget()
         return
     end
@@ -150,7 +130,7 @@ function widget:Initialize()
     if not shaderDeferred then
         Spring.Log("Map shader", "error",
                    "Failed to create map shader (Deferred mode)!")
-        Spring.Echo(gl.GetShaderLog())
+        Spring.Echo(glGetShaderLog())
         widgetHandler:RemoveWidget()
         return
     end
@@ -167,7 +147,7 @@ function widget:DrawWorld()
     if not newshader then
         Spring.Log("Map shader", "error",
                    "Failed to create map shader!")
-        Spring.Echo(gl.GetShaderLog())
+        Spring.Echo(glGetShaderLog())
         return
     end
     shader = newshader
@@ -175,7 +155,7 @@ function widget:DrawWorld()
     if not newshader then
         Spring.Log("Map shader", "error",
                    "Failed to create map shader (Deferred mode)!")
-        Spring.Echo(gl.GetShaderLog())
+        Spring.Echo(glGetShaderLog())
         return
     end
     shaderDeferred = newshader
