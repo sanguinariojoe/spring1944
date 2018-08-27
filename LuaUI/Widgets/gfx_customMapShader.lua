@@ -151,8 +151,8 @@ function CompileShader(deferred)
                 groundShadowDensity = Uniform:init("groundShadowDensity", glUniform),
                 mapHeights = Uniform:init("mapHeights", glUniform),
     }
-    textures = {diffuseTex = "$map_gbuffer_difftex",
-                normalsTex = "$map_gbuffer_normtex",
+    textures = {-- diffuseTex = "$map_gbuffer_difftex",
+                normalsTex = "$ssmf_normals",
                 detailTex = "$detail",
     }
     if glGetMapRendering("voidWater") then
