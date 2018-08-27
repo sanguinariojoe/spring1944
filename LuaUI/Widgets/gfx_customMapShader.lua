@@ -51,7 +51,7 @@ function Uniform:init(name, setter, t)
     local uniform = {}
     setmetatable(uniform,Uniform)
     uniform.name = name
-    uniform.loc = 0
+    uniform.loc = -1
     uniform.value = nil
     uniform.setter = setter
     uniform.type = t or 2  -- float by default
@@ -81,6 +81,9 @@ function Uniform:setValue(value)
         return
     end
     --]]
+    if self.loc == -1 then
+        return
+    end
     if self.setter == glUniformArray then
         if (type(value) ~= "table") then
             Spring.Log("Map shader", "error",
@@ -271,15 +274,14 @@ function CompileShader(deferred)
     end
 
     -- Get the locations
-    for name,uniform in pairs(uniforms) do
+    for name, uniform in pairs(uniforms) do
+        Spring.Echo(newshader, name)
         local loc = glGetUniformLocation(newshader, name)
-        if loc == nil then
+        if (loc == nil) or (loc == -1) then
             Spring.Log("Map shader", "warning",
-                   "Uniform '" .. name "' is not present in the map shader")
-            uniforms[name] = nil
-        else
-            uniform:setLoc(loc)
+                   "Uniform '" .. name .. "' is not present in the map shader")
         end
+        uniform:setLoc(loc)
     end
     
     if deferred then
@@ -337,7 +339,9 @@ function setDefaultUniformsAndTextures(uniforms, textures)
 
     for name, texture in pairs(textures) do
         local index = uniforms[name]:getValue()
-        glTexture(index, texture)
+        if index then
+            glTexture(index, texture)
+        end
     end
 end
 
@@ -348,13 +352,10 @@ function unsetDefaultTextures(uniforms, textures)
     end
 end
 
-function widget:Update()
+function widget:DrawGenesis()
     local newshader
     newshader = CompileShader()
     newshader = CompileShader(true) or newshader
-    Spring.Echo("*** Update")
-    Spring.Echo(CustomMapShaders.forward.uniforms["infoTexGen"])
-    Spring.Echo("Update ***")
     if not newshader then
         return
     end
@@ -363,14 +364,15 @@ function widget:Update()
 end
 
 function widget:DrawGroundPreForward()
-    Spring.Echo("*** DrawGroundPreForward")
-    Spring.Echo(CustomMapShaders.forward.uniforms["infoTexGen"])
-    Spring.Echo("DrawGroundPreForward ***")
+    Spring.Echo("*** widget:DrawGroundPreForward")
     setDefaultUniformsAndTextures(CustomMapShaders.forward.uniforms,
                                   CustomMapShaders.forward.textures)
+    Spring.Echo("widget:DrawGroundPreForward ***")
 end
 
 function widget:DrawGroundPreDeferred()
+    Spring.Echo("*** widget:DrawGroundPreDeferred")
     setDefaultUniformsAndTextures(CustomMapShaders.deferred.uniforms,
                                   CustomMapShaders.deferred.textures)
+    Spring.Echo("widget:DrawGroundPreDeferred ***")
 end
