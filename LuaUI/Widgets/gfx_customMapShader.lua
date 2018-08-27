@@ -348,7 +348,7 @@ function unsetDefaultTextures(uniforms, textures)
     end
 end
 
-function widget:Update(frame)
+function widget:Update()
     local newshader
     newshader = CompileShader()
     newshader = CompileShader(true) or newshader
