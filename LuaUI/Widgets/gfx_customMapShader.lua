@@ -159,5 +159,58 @@ function widget:DrawWorld()
         return
     end
     shaderDeferred = newshader
-    SetMapShader(shader, shaderDeferred, true)    
+    SetMapShader(shader, shaderDeferred, true)
+
+    local keys = {"diffuseTex",
+                  "detailTex",
+                  "shadowTex",
+                  "normalsTex",
+                  "specularTex",
+                  "splatDetailTex",
+                  "splatDistrTex",
+                  "skyReflectTex",
+                  "skyReflectModTex",
+                  "blendNormalsTex",
+                  "lightEmissionTex",
+                  "parallaxHeightTex",
+                  "infoTex",
+                  "splatDetailNormalTex1",
+                  "splatDetailNormalTex2",
+                  "splatDetailNormalTex3",
+                  "splatDetailNormalTex4",
+                  "mapSizePO2",
+                  "mapSize",
+                  "lightDir",
+                  "cameraPos",
+                  "groundAmbientColor",
+                  "groundDiffuseColor",
+                  "groundSpecularColor",
+                  "groundSpecularExponent",
+                  "groundShadowDensity",
+                  "shadowMat",
+                  "shadowParams",
+                  "waterMinColor",
+                  "waterBaseColor",
+                  "waterAbsorbColor",
+                  "splatTexScales",
+                  "splatTexMults",
+                  "infoTexIntensityMul",
+                  "normalTexGen",
+                  "specularTexGen",
+                  "infoTexGen",
+    }
+    local uniforms = gl.GetMapShaderUniform(keys)
+    Spring.Echo(uniforms)
+    for i=1,#keys do
+        if (type(uniforms[i]) == "table") then
+            val = "{"
+            for j=1,#uniforms[i] do
+                val = val .. uniforms[i][j] .. ","
+            end
+            val = val .. "}"
+            Spring.Echo(keys[i], val)
+        else
+            Spring.Echo(keys[i], uniforms[i])
+        end
+    end
 end
