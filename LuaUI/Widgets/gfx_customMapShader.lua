@@ -275,7 +275,6 @@ function CompileShader(deferred)
 
     -- Get the locations
     for name, uniform in pairs(uniforms) do
-        Spring.Echo(newshader, name)
         local loc = glGetUniformLocation(newshader, name)
         if (loc == nil) or (loc == -1) then
             Spring.Log("Map shader", "warning",
@@ -364,15 +363,11 @@ function widget:DrawGenesis()
 end
 
 function widget:DrawGroundPreForward()
-    Spring.Echo("*** widget:DrawGroundPreForward")
     setDefaultUniformsAndTextures(CustomMapShaders.forward.uniforms,
                                   CustomMapShaders.forward.textures)
-    Spring.Echo("widget:DrawGroundPreForward ***")
 end
 
 function widget:DrawGroundPreDeferred()
-    Spring.Echo("*** widget:DrawGroundPreDeferred")
     setDefaultUniformsAndTextures(CustomMapShaders.deferred.uniforms,
                                   CustomMapShaders.deferred.textures)
-    Spring.Echo("widget:DrawGroundPreDeferred ***")
 end
