@@ -330,12 +330,8 @@ function setDefaultUniformsAndTextures(uniforms, textures)
     end
     local values = glGetMapShaderUniform(names)
     for i,name in ipairs(names) do
-        -- Spring.Echo(name)
         if values[i] ~= nil then
-            -- Spring.Echo(values[i])
             uniforms[name]:setValue(values[i])
-        else
-            -- Spring.Echo("NIL!!!")
         end
     end
 
@@ -375,7 +371,6 @@ function widget:DrawGroundPreForward()
 end
 
 function widget:DrawGroundPreDeferred()
-    CompileShader(true)
-    -- setDefaultUniformsAndTextures(CustomMapShaders.deferred.uniforms,
-    --                               CustomMapShaders.deferred.textures)
+    setDefaultUniformsAndTextures(CustomMapShaders.deferred.uniforms,
+                                  CustomMapShaders.deferred.textures)
 end
