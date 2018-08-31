@@ -26,6 +26,7 @@ local glUniformArray        = gl.UniformArray
 local glUniformMatrix       = gl.UniformMatrix
 local glTexture             = gl.Texture
 local glUseShader           = gl.UseShader
+local glGetActiveUniforms   = gl.GetActiveUniforms
 local SetMapShader      = Spring.SetMapShader
 local HaveShadows       = Spring.HaveShadows
 local GetCameraPosition = Spring.GetCameraPosition
@@ -55,12 +56,10 @@ function log2(n)
     return math.log(n) / math.log(2)
 end
 
-
 function nextPowerOf2(n)
     pos = math.ceil(log2(n))
     return math.pow(2, pos)
 end
-
 
 SQUARE_SIZE = 8
 MAPX = Game.mapSizeX
@@ -72,15 +71,28 @@ PWR2MAPZ = nextPowerOf2(MAPZ / SQUARE_SIZE) * SQUARE_SIZE
 Uniform = {}
 Uniform.__index = Uniform
 
-function Uniform:init(name, setter, t)
+function Uniform:init(name, shader, value, setter, t)
     local uniform = {}
     setmetatable(uniform,Uniform)
     uniform.name = name
-    uniform.loc = -1
-    uniform.value = nil
+    uniform.shader = shader
+    if shader then
+        uniform.loc = glGetUniformLocation(shader, name)
+    else
+        uniform.loc = -1
+    end
+    uniform.value = value
     uniform.setter = setter
-    uniform.type = t or 2  -- float by default
+    uniform.type = t or 2  -- float by default. Used just in gl.UniformArray
     return uniform
+end
+
+function Uniform:getShader()
+    return self.loc
+end
+
+function Uniform:setShader(shader)
+    self.shader = shader
 end
 
 function Uniform:getLoc()
@@ -88,11 +100,6 @@ function Uniform:getLoc()
 end
 
 function Uniform:setLoc(loc)
-    --[[
-    if self.loc == loc then
-        return
-    end
-    --]]
     self.loc = loc
 end
 
@@ -101,51 +108,49 @@ function Uniform:getValue()
 end
 
 function Uniform:setValue(value)
-    --[[
-    if self.value == value then
-        return
-    end
-    --]]
+    self.value = value
+end
+
+function Uniform:bind()
     if self.loc == -1 then
         return
     end
     if self.setter == glUniformArray then
-        if (type(value) ~= "table") then
+        if (type(self.value) ~= "table") then
             Spring.Log("Map shader", "error",
                        "gl.UniformArray requires a table to set '" .. self.name .. "'")
             return
         end
-        self.setter(self.loc, self.type, value)
+        self.setter(self.loc, self.type, self.value)
     elseif self.setter == glUniformMatrix then
-        if (type(value) ~= "table") or (#value ~= 16) then
+        if (type(self.value) ~= "table") or (#self.value ~= 16) then
             Spring.Log("Map shader", "error",
                        "gl.UniformMatrix requires 16 numbers to set '" .. self.name .. "'")
             return
         end
         self.setter(self.loc,
-                    value[ 1], value[ 2], value[ 3], value[ 4],
-                    value[ 5], value[ 6], value[ 7], value[ 8],
-                    value[ 9], value[10], value[11], value[12],
-                    value[13], value[14], value[15], value[16])
+                    self.value[ 1], self.value[ 2], self.value[ 3], self.value[ 4],
+                    self.value[ 5], self.value[ 6], self.value[ 7], self.value[ 8],
+                    self.value[ 9], self.value[10], self.value[11], self.value[12],
+                    self.value[13], self.value[14], self.value[15], self.value[16])
     else
-        if (type(value) == "table") then
-            if (#value == 1) then
-                self.setter(self.loc, value[1])
-            elseif (#value == 2) then
-                self.setter(self.loc, value[1], value[2])
-            elseif (#value == 3) then
-                self.setter(self.loc, value[1], value[2], value[3])
-            elseif (#value == 4) then
-                self.setter(self.loc, value[1], value[2], value[3], value[4])
+        if (type(self.value) == "table") then
+            if (#self.value == 1) then
+                self.setter(self.loc, self.value[1])
+            elseif (#self.value == 2) then
+                self.setter(self.loc, self.value[1], self.value[2])
+            elseif (#self.value == 3) then
+                self.setter(self.loc, self.value[1], self.value[2], self.value[3])
+            elseif (#self.value == 4) then
+                self.setter(self.loc, self.value[1], self.value[2], self.value[3], self.value[4])
             else
                 Spring.Log("Map shader", "error",
                            "gl.Uniform/gl.UniformInt requires a table of 1-4 numbers to set '" .. self.name .. "'")                
             end
         else
-            self.setter(self.loc, value)
+            self.setter(self.loc, self.value)
         end
     end
-    self.value = value
 end
 
 
@@ -202,89 +207,106 @@ function glGetMapShaderFlags(flags)
     return values
 end
 
-function glGetMapShaderUniform(uniforms)
-    local x, y, z, w
-    values = {}
-    for i, name in ipairs(uniforms) do
-        if name == "mapSizePO2" then
-            values[i] = {PWR2MAPX, PWR2MAPZ}
-        elseif name == "mapSize" then
-            values[i] = {MAPX, MAPZ}
-        elseif name == "cameraPos" then
-            values[i] = GetCameraPosition()
-        elseif name == "lightDir" then
-            x, y, z = glGetSun("pos")
-            values[i] = {x, y, z, 0}
-        elseif name == "groundAmbientColor" then
-            x, y, z = glGetSun("ambient")
-            values[i] = {x, y, z}
-        elseif name == "groundDiffuseColor" then
-            x, y, z = glGetSun("diffuse")
-            values[i] = {x, y, z}
-        elseif name == "groundSpecularColor" then
-            x, y, z = glGetSun("specular")
-            values[i] = {x, y, z}
-        elseif name == "groundSpecularExponent" then
-            values[i] = glGetSun("specularExponent")
-        elseif name == "groundShadowDensity" then
-            values[i] = glGetSun("shadowDensity")
-        elseif name == "shadowMat" then
-             m0,  m1,  m2,  m3,
-             m4,  m5,  m6,  m7,
-             m8,  m9, m10, m11,
-            m12, m13, m14, m15 = glGetMatrixData("shadow")
-            values[i] = { m0,  m1,  m2,  m3,
-                          m4,  m5,  m6,  m7,
-                          m8,  m9, m10, m11,
-                         m12, m13, m14, m15}
-        elseif name == "shadowParams" then
-            x, y, z, w = glGetShadowMapParams()
-            values[i] = {x, y, z, w}
-        elseif name == "waterMinColor" then
-            x, y, z = glGetWaterRendering("minColor")
-            values[i] = {x, y, z}
-        elseif name == "waterBaseColor" then
-            x, y, z = glGetWaterRendering("baseColor")
-            values[i] = {x, y, z}
-        elseif name == "waterAbsorbColor" then
-            x, y, z = glGetWaterRendering("absorb")
-            values[i] = {x, y, z}
-        elseif name == "splatTexScales" then
-            x, y, z, w = glGetMapRendering("splatTexScales")
-            values[i] = {x, y, z, w}
-        elseif name == "splatTexMults" then
-            x, y, z, w = glGetMapRendering("splatTexMults")
-            values[i] = {x, y, z, w}
-        elseif name == "infoTexIntensityMul" then
-            local mode = GetMapDrawMode()
-            if mode == "metal" then
-                values[i] = 2.0
-            else
-                values[i] = {1.0}
-            end
-        elseif name == "normalTexGen" then
-            if glGetMapShaderFlag("SMF_BLEND_NORMALS") then
-                local texinfo = glTextureInfo("$ssmf_normals")
-                x = (texinfo.xsize - 1) / SQUARE_SIZE
-                z = (texinfo.ysize - 1) / SQUARE_SIZE
-                values[i] = {1.0 / x, 1.0 / z}
-            else
-                -- Warning here??
-                values[i] = {0, 0}
-            end
-        elseif name == "specularTexGen" then
-            values[i] = {1.0 / MAPX, 1.0 / MAPZ}
-        elseif name == "infoTexGen" then
-            values[i] = {1.0 / PWR2MAPX, 1.0 / PWR2MAPX}
-        elseif name == "mapHeights" then
-            _, _, z, w = GetGroundExtremes()
-            values[i] = {z, w}
+function glGetMapShaderUniformValue(name)
+    if name == "mapSizePO2" then
+        return {PWR2MAPX, PWR2MAPZ}
+    elseif name == "mapSize" then
+        return {MAPX, MAPZ}
+    elseif name == "cameraPos" then
+        x, y, z = GetCameraPosition()
+        return {x, y, z}
+    elseif name == "lightDir" then
+        x, y, z = glGetSun("pos")
+        return {x, y, z, 0}
+    elseif name == "groundAmbientColor" then
+        x, y, z = glGetSun("ambient")
+        return {x, y, z}
+    elseif name == "groundDiffuseColor" then
+        x, y, z = glGetSun("diffuse")
+        return {x, y, z}
+    elseif name == "groundSpecularColor" then
+        x, y, z = glGetSun("specular")
+        return {x, y, z}
+    elseif name == "groundSpecularExponent" then
+        return glGetSun("specularExponent")
+    elseif name == "groundShadowDensity" then
+        return glGetSun("shadowDensity")
+    elseif name == "shadowMat" then
+         m0,  m1,  m2,  m3,
+         m4,  m5,  m6,  m7,
+         m8,  m9, m10, m11,
+        m12, m13, m14, m15 = glGetMatrixData("shadow")
+        return { m0,  m1,  m2,  m3,
+                 m4,  m5,  m6,  m7,
+                 m8,  m9, m10, m11,
+                m12, m13, m14, m15}
+    elseif name == "shadowParams" then
+        x, y, z, w = glGetShadowMapParams()
+        return {x, y, z, w}
+    elseif name == "waterMinColor" then
+        x, y, z = glGetWaterRendering("minColor")
+        return {x, y, z}
+    elseif name == "waterBaseColor" then
+        x, y, z = glGetWaterRendering("baseColor")
+        return {x, y, z}
+    elseif name == "waterAbsorbColor" then
+        x, y, z = glGetWaterRendering("absorb")
+        return {x, y, z}
+    elseif name == "splatTexScales" then
+        x, y, z, w = glGetMapRendering("splatTexScales")
+        return {x, y, z, w}
+    elseif name == "splatTexMults" then
+        x, y, z, w = glGetMapRendering("splatTexMults")
+        return {x, y, z, w}
+    elseif name == "infoTexIntensityMul" then
+        local mode = GetMapDrawMode()
+        if mode == "metal" then
+            return 2.0
         else
-            Spring.Log("Map shader", "error",
-                       "Unknown map default uniform '" .. name .. "'!")
+            return 1.0
         end
+    elseif name == "normalTexGen" then
+        if glGetMapShaderFlag("SMF_BLEND_NORMALS") then
+            local texinfo = glTextureInfo("$ssmf_normals")
+            x = (texinfo.xsize - 1) / SQUARE_SIZE
+            z = (texinfo.ysize - 1) / SQUARE_SIZE
+            return {1.0 / x, 1.0 / z}
+        else
+            -- Warning here??
+            return {0, 0}
+        end
+    elseif name == "specularTexGen" then
+        return {1.0 / MAPX, 1.0 / MAPZ}
+    elseif name == "infoTexGen" then
+        return {1.0 / PWR2MAPX, 1.0 / PWR2MAPZ}
+    elseif name == "mapHeights" then
+        _, _, z, w = GetGroundExtremes()
+        return {z, w}
     end
-    return values
+    return nil
+end
+
+function glGetMapShaderUniform(name, shader)
+    local value = glGetMapShaderUniformValue(name)
+    if value == nil then
+        return nil
+    end
+    local setter
+    if name == "shadowMat" then
+        setter = glUniformMatrix
+    else
+        setter = glUniform
+    end
+    return Uniform:init(name, shader, value, setter)
+end
+
+function glGetMapShaderUniforms(names, shader)
+    local x, y, z, w
+    uniforms = {}
+    for _, name in pairs(names) do
+        uniforms[name] = glGetMapShaderUniform(name, shader)
+    end
+    return uniforms
 end
 
 
@@ -300,18 +322,6 @@ function CompileShader(deferred)
     if deferred then
         definitions[#definitions + 1] = "#define DEFERRED_MODE"
     end
-    uniforms = {-- texSquare = Uniform:init("texSquare", glUniformInt),
-                cameraPos = Uniform:init("cameraPos", glUniform),
-                lightDir = Uniform:init("lightDir", glUniform),
-                normalTexGen = Uniform:init("normalTexGen", glUniform),
-                specularTexGen = Uniform:init("specularTexGen", glUniform),
-                groundAmbientColor = Uniform:init("groundAmbientColor", glUniform),
-                groundDiffuseColor = Uniform:init("groundDiffuseColor", glUniform),
-                groundSpecularColor = Uniform:init("groundSpecularColor", glUniform),
-                groundSpecularExponent = Uniform:init("groundSpecularExponent", glUniform),
-                groundShadowDensity = Uniform:init("groundShadowDensity", glUniform),
-                mapHeights = Uniform:init("mapHeights", glUniform),
-    }
     textures = {-- diffuseTex = "$map_gbuffer_difftex",
                 detailTex = {2, "$detail"},
                 normalsTex = {5, "$ssmf_normals"},
@@ -329,16 +339,12 @@ function CompileShader(deferred)
     if glGetMapShaderFlag("SMF_DETAIL_TEXTURE_SPLATTING") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_TEXTURE_SPLATTING"
         if not glGetMapShaderFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING") then
-            uniforms["splatTexMults"] = Uniform:init("splatTexMults", glUniform)
-            uniforms["splatTexScales"] = Uniform:init("splatTexScales", glUniform)
             textures["splatDetailTex"] = {7, "$ssmf_splat_detail"}
             textures["splatDistrTex"] = {8, "$ssmf_splat_distr"}
         end
     end
     if glGetMapShaderFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_NORMAL_TEXTURE_SPLATTING"
-        uniforms["splatTexMults"] = Uniform:init("splatTexMults", glUniform)
-        uniforms["splatTexScales"] = Uniform:init("splatTexScales", glUniform)
         textures["splatDistrTex"] = {8, "$ssmf_splat_distr"}
         textures["splatDetailNormalTex1"] = {15, "$ssmf_splat_normals:0"}
         textures["splatDetailNormalTex2"] = {16, "$ssmf_splat_normals:1"}
@@ -350,9 +356,6 @@ function CompileShader(deferred)
     end
     if glGetMapShaderFlag("SMF_WATER_ABSORPTION") then
         definitions[#definitions + 1] = "#define SMF_WATER_ABSORPTION"
-        uniforms["waterMinColor"] = Uniform:init("waterMinColor", glUniform)
-        uniforms["waterBaseColor"] = Uniform:init("waterBaseColor", glUniform)
-        uniforms["waterAbsorbColor"] = Uniform:init("waterAbsorbColor", glUniform)
     end
     if glGetMapShaderFlag("SMF_SKY_REFLECTIONS") then
         definitions[#definitions + 1] = "#define SMF_SKY_REFLECTIONS"
@@ -373,14 +376,10 @@ function CompileShader(deferred)
     end
     if glGetMapShaderFlag("HAVE_SHADOWS") then
         definitions[#definitions + 1] = "#define HAVE_SHADOWS"
-        uniforms["shadowMat"] = Uniform:init("shadowMat", glUniformMatrix)
-        uniforms["shadowParams"] = Uniform:init("shadowParams", glUniform)
         textures["shadowTex"] = {4, "$shadow"}
     end
     if glGetMapShaderFlag("HAVE_INFOTEX") then
         definitions[#definitions + 1] = "#define HAVE_INFOTEX"
-        uniforms["infoTexIntensityMul"] = Uniform:init("infoTexIntensityMul", glUniform)
-        uniforms["infoTexGen"] = Uniform:init("infoTexGen", glUniform)
         textures["infoTex"] = {14, "$info"}
     end
     -- definitions[#definitions + 1] = "#define BASE_DYNAMIC_MAP_LIGHT " .. tostring(glGetMapRendering("baseDynamicMapLight"))
@@ -437,15 +436,18 @@ function CompileShader(deferred)
         return false
     end
 
-    -- Get the locations
-    for name, uniform in pairs(uniforms) do
-        local loc = glGetUniformLocation(newshader, name)
-        if (loc == nil) or (loc == -1) then
-            Spring.Log("Map shader", "warning",
-                   "Uniform '" .. name .. "' is not present in the map shader")
-        end
-        uniform:setLoc(loc)
+    -- Initialize the default uniforms
+    local active_uniforms = glGetActiveUniforms(newshader)
+    local names = {}
+    for i, active_uniform in ipairs(active_uniforms) do
+        names[i] = active_uniform.name
     end
+    local uniforms = glGetMapShaderUniforms(names, newshader)
+    glUseShader(newshader)
+        for _, uniform in pairs(uniforms) do
+            uniform:bind()
+        end
+    glUseShader(0)
     
     if deferred then
         CustomMapShaders.deferred.vertex_src = vertex
@@ -465,23 +467,12 @@ function CompileShader(deferred)
 end
 
 function widget:Initialize()
-    if not glGetMapRendering or not glGetMapShaderUniform then
+    if not glGetMapRendering then
         Spring.Log("Map shader", "error",
                    "Invalid engine version!")
         widgetHandler:RemoveWidget()
         return
     end
-
-    local success
-    success = CompileShader()
-    success = CompileShader(true) and success
-    if not success then
-        widgetHandler:RemoveWidget()
-        return
-    end
-
-    SetMapShader(CustomMapShaders.forward.shader,
-                 CustomMapShaders.deferred.shader)
 end
 
 function widget:Shutdown()
@@ -489,15 +480,9 @@ function widget:Shutdown()
 end
 
 function setDefaultUniformsAndTextures(uniforms, textures)
-    local names = {}
-    for name, _ in pairs(uniforms) do
-        names[#names + 1] = name
-    end
-    local values = glGetMapShaderUniform(names)
-    for i,name in ipairs(names) do
-        if values[i] ~= nil then
-            uniforms[name]:setValue(values[i])
-        end
+    for name, uniform in pairs(uniforms) do
+        uniform:setValue(glGetMapShaderUniformValue(name))
+        uniform:bind()
     end
 
     for name, texture in pairs(textures) do
@@ -522,12 +507,31 @@ function widget:DrawGenesis()
                  CustomMapShaders.deferred.shader)
 end
 
+FRAME_DEFAULT_UNIFORMS = {"mapHeights",
+                          "cameraPos",
+                          "shadowMat",
+                          "shadowParams",
+                          "infoTexIntensityMul",
+                          "lightDir",
+                          "groundShadowDensity",
+                          "groundAmbientColor",
+                          "groundDiffuseColor",
+                          "groundSpecularColor"}
+
 function widget:DrawGroundPreForward()
-    setDefaultUniformsAndTextures(CustomMapShaders.forward.uniforms,
+    local uniforms = {}
+    for _, name in pairs(FRAME_DEFAULT_UNIFORMS) do
+        uniforms[name] = CustomMapShaders.forward.uniforms[name]
+    end
+    setDefaultUniformsAndTextures(uniforms,
                                   CustomMapShaders.forward.textures)
 end
 
 function widget:DrawGroundPreDeferred()
-    setDefaultUniformsAndTextures(CustomMapShaders.deferred.uniforms,
+    local uniforms = {}
+    for _, name in pairs(FRAME_DEFAULT_UNIFORMS) do
+        uniforms[name] = CustomMapShaders.deferred.uniforms[name]
+    end
+    setDefaultUniformsAndTextures(uniforms,
                                   CustomMapShaders.deferred.textures)
 end
