@@ -40,17 +40,18 @@ CustomMapShaders = {
         fragment_src = nil,
         shader = nil,
         uniforms = {},
-        textures = {}
+        textures = {},
+        sunchanged = false
     },
     deferred = {
         vertex_src = nil,
         fragment_src = nil,
         shader = nil,
         uniforms = {},
-        textures = {}
+        textures = {},
+        sunchanged = false
     }
 }
-
 
 function log2(n)
     return math.log(n) / math.log(2)
@@ -217,7 +218,7 @@ function glGetMapShaderUniformValue(name)
         return {x, y, z}
     elseif name == "lightDir" then
         x, y, z = glGetSun("pos")
-        return {x, y, z, 0}
+        return {x, y, z, 1}
     elseif name == "groundAmbientColor" then
         x, y, z = glGetSun("ambient")
         return {x, y, z}
@@ -479,19 +480,21 @@ function widget:Shutdown()
     SetMapShader(0, 0)
 end
 
-function setDefaultUniformsAndTextures(uniforms, textures)
+function setDefaultUniforms(uniforms)
     for name, uniform in pairs(uniforms) do
         uniform:setValue(glGetMapShaderUniformValue(name))
         uniform:bind()
     end
+end
 
-    for name, texture in pairs(textures) do
+function setDefaultTextures(textures)
+    for _, texture in pairs(textures) do
         glTexture(texture[1], texture[2])
     end
 end
 
-function unsetDefaultTextures(uniforms, textures)
-    for name, _ in pairs(textures) do
+function unsetDefaultTextures(textures)
+    for _, texture in pairs(textures) do
         glTexture(texture[1], false)
     end
 end
@@ -503,6 +506,7 @@ function widget:DrawGenesis()
     if not newshader then
         return
     end
+
     SetMapShader(CustomMapShaders.forward.shader,
                  CustomMapShaders.deferred.shader)
 end
@@ -511,20 +515,26 @@ FRAME_DEFAULT_UNIFORMS = {"mapHeights",
                           "cameraPos",
                           "shadowMat",
                           "shadowParams",
-                          "infoTexIntensityMul",
-                          "lightDir",
-                          "groundShadowDensity",
-                          "groundAmbientColor",
-                          "groundDiffuseColor",
-                          "groundSpecularColor"}
+                          "infoTexIntensityMul"}
+SUNCHANGED_DEFAULT_UNIFORMS = {"lightDir",
+                               "groundShadowDensity",
+                               "groundAmbientColor",
+                               "groundDiffuseColor",
+                               "groundSpecularColor"}
 
 function widget:DrawGroundPreForward()
     local uniforms = {}
     for _, name in pairs(FRAME_DEFAULT_UNIFORMS) do
         uniforms[name] = CustomMapShaders.forward.uniforms[name]
     end
-    setDefaultUniformsAndTextures(uniforms,
-                                  CustomMapShaders.forward.textures)
+    if CustomMapShaders.forward.sunchanged then
+        for _, name in pairs(SUNCHANGED_DEFAULT_UNIFORMS) do
+            uniforms[name] = CustomMapShaders.forward.uniforms[name]
+        end
+        CustomMapShaders.forward.sunchanged = false
+    end
+    setDefaultUniforms(uniforms)
+    setDefaultTextures(CustomMapShaders.forward.textures)
 end
 
 function widget:DrawGroundPreDeferred()
@@ -532,6 +542,17 @@ function widget:DrawGroundPreDeferred()
     for _, name in pairs(FRAME_DEFAULT_UNIFORMS) do
         uniforms[name] = CustomMapShaders.deferred.uniforms[name]
     end
-    setDefaultUniformsAndTextures(uniforms,
-                                  CustomMapShaders.deferred.textures)
+    if CustomMapShaders.deferred.sunchanged then
+        for _, name in pairs(SUNCHANGED_DEFAULT_UNIFORMS) do
+            uniforms[name] = CustomMapShaders.deferred.uniforms[name]
+        end
+        CustomMapShaders.deferred.sunchanged = false
+    end
+    setDefaultUniforms(uniforms)
+    setDefaultTextures(CustomMapShaders.deferred.textures)
+end
+
+function widget:SunChanged()
+    CustomMapShaders.forward.sunchanged = true
+    CustomMapShaders.deferred.sunchanged = true
 end
