@@ -30,7 +30,8 @@ local materials = {
          [2] = '$shadow',
          [3] = '$specular',
          [4] = '$reflection',
-         [5] = '%NORMALTEX',
+         [5] = 'unittextures/brdfLUT.png',
+         [6] = '%NORMALTEX',
        },
    },
    normalModelled = {
@@ -59,6 +60,7 @@ local materials = {
          [2] = '$shadow',
          [3] = '$specular',
          [4] = '$reflection',
+         [5] = 'unittextures/brdfLUT.png',
        },
    },
 }
