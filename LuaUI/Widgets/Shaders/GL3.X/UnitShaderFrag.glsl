@@ -291,14 +291,14 @@ void main(void){
         // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
         vec3 color = NdotL * sunDiffuse * (diffuseContrib + specContrib);
 
+        // Image based Lighting
+        color += getIBLContribution(pbrInputs, n, r);
+
         // Shadows
         color *= shadow;
 
         // Ambient illumination
         color += baseColor.rgb * sunAmbient * AMBIENTMULT;
-
-        // Image based Lighting
-        color += getIBLContribution(pbrInputs, n, r);
 
         // self-illumination
         color += extraColor.rrr;
