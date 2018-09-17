@@ -22,7 +22,7 @@ uniform vec3 etcLoc;
     #define SPECULARMULT 1.0
 #endif
 #ifndef AMBIENTMULT
-    #define AMBIENTMULT 0.3
+    #define AMBIENTMULT 0.5
 #endif
 #ifndef METALMULT
     #define METALMULT 1.0
@@ -109,7 +109,7 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
     vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
     vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-    return pbrInputs.metalness * (diffuse + specular);
+    return diffuse + specular;
 }
 
 // Basic Lambertian diffuse
@@ -117,7 +117,8 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 // See also [1], Equation 1
 vec3 diffuse(PBRInfo pbrInputs)
 {
-    return pbrInputs.diffuseColor / M_PI;
+    // return pbrInputs.diffuseColor / M_PI;
+    return pbrInputs.diffuseColor;
 }
 
 // The following equation models the Fresnel reflectance term of the spec equation (aka F())
@@ -246,7 +247,8 @@ void main(void){
 
         // For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
         // For very low reflectance range on highly diffuse objects (below 4%), incrementally reduce grazing reflecance to 0%.
-        float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
+        // float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
+        float reflectance90 = reflectance;
         vec3 specularEnvironmentR0 = specularColor.rgb;
         vec3 specularEnvironmentR90 = vec3(1.0) * reflectance90;
 
@@ -254,7 +256,7 @@ void main(void){
         vec3 v = -normalize(cameraDir);
         vec3 l = sunPos;
         vec3 h = normalize(l+v);
-        vec3 reflection = -normalize(reflect(v, n));
+        vec3 r = -normalize(reflect(v, n));
 
         float NdotL = clamp(dot(n, l), 0.001, 1.0);
         float NdotV = clamp(abs(dot(n, v)), 0.001, 1.0);
@@ -285,20 +287,24 @@ void main(void){
         // Calculation of analytical lighting contribution
         vec3 diffuseContrib = (1.0 - F) * diffuse(pbrInputs);
         vec3 specContrib = F * G * D / (4.0 * NdotL * NdotV);
+
         // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-        vec3 color = NdotL * sunDiffuse * (diffuseContrib + specContrib) + baseColor * sunAmbient * AMBIENTMULT;
+        vec3 color = NdotL * sunDiffuse * (diffuseContrib + specContrib);
 
         // Shadows
         color *= shadow;
 
+        // Ambient illumination
+        color += baseColor.rgb * sunAmbient * AMBIENTMULT;
+
         // Image based Lighting
-        color += getIBLContribution(pbrInputs, n, reflection);
+        color += getIBLContribution(pbrInputs, n, r);
 
         // self-illumination
         color += extraColor.rrr;
 
         // Final color
-        gl_FragColor = vec4(pow(color, vec3(1.0/2.2)), baseColor.a);
+        gl_FragColor = vec4(color, baseColor.a);
     #endif
 
     %%FRAGMENT_POST_SHADING%%
