@@ -77,89 +77,91 @@ end
 --------------------------------------------------------------------------------
 
 local materials = {
-   flagShader = {
-      shaderDefinitions = {
-        "#define use_perspective_correct_shadows",
-        "#define use_normalmapping",
-        "#define deferred_mode 0",
-        "#define SPECULARMULT 1.0",
-      },
-      deferredDefinitions = {
-        "#define use_perspective_correct_shadows",
-        "#define use_normalmapping",
-        "#define deferred_mode 1",
-        "#define SPECULARMULT 1.0",
-      },
-      shaderPlugins = {
-        VERTEX_GLOBAL_NAMESPACE = [[
-          uniform float frame2;
-        ]],
-        VERTEX_PRE_TRANSFORM = [[
-          if (gl_MultiTexCoord4.x > 10.0) {
-            float a;
-            vec3 n = vec3(0.0);
+    flagShader = {
+        shaderDefinitions = {
+            "#define use_perspective_correct_shadows",
+            "#define use_normalmapping",
+            "#define deferred_mode 0",
+            "#define SPECULARMULT 1.0",
+        },
+        deferredDefinitions = {
+            "#define use_perspective_correct_shadows",
+            "#define use_normalmapping",
+            "#define deferred_mode 1",
+            "#define SPECULARMULT 1.0",
+        },
+        shaderPlugins = {
+            VERTEX_GLOBAL_NAMESPACE = [[
+                uniform float frame2;
+            ]],
+            VERTEX_PRE_TRANSFORM = [[
+                if (gl_MultiTexCoord4.x > 10.0) {
+                    float a;
+                    vec3 n = vec3(0.0);
 
-        a = (vertex.x * 0.5 + frame2);
-        vertex.z += 1.35 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(-1.0, 0.0, cos(a)) * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2);
+                    vertex.z += 1.35 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(-1.0, 0.0, cos(a)) * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-        a = (vertex.x * 0.5 + frame2 + vertex.y * 0.5);
-        vertex.z += 0.2 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(-1.0, 0.0, cos(a)) * 0.13 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2 + vertex.y * 0.5);
+                    vertex.z += 0.2 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(-1.0, 0.0, cos(a)) * 0.13 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-        a = (vertex.x * 0.5 + frame2 - 0.33);
-        vertex.y += 0.8 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(0.0, cos(a), -1.0) * 0.8 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2 - 0.33);
+                    vertex.y += 0.8 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(0.0, cos(a), -1.0) * 0.8 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-            normal = normalize(mix(normal,n,0.65));
-          }
-        ]],
-      },
-      deferredPlugins = {
-        VERTEX_GLOBAL_NAMESPACE = [[
-          uniform float frame2;
-        ]],
-        VERTEX_PRE_TRANSFORM = [[
-          if (gl_MultiTexCoord4.x > 10.0) {
-            float a;
-            vec3 n = vec3(0.0);
+                    normal = normalize(mix(normal,n,0.65));
+                }
+            ]],
+            PBR_INCLUDE = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL3.X\\pbr.inc.glsl", VFS.ZIP),
+        },
+        deferredPlugins = {
+            VERTEX_GLOBAL_NAMESPACE = [[
+                uniform float frame2;
+            ]],
+            VERTEX_PRE_TRANSFORM = [[
+                if (gl_MultiTexCoord4.x > 10.0) {
+                    float a;
+                    vec3 n = vec3(0.0);
 
-        a = (vertex.x * 0.5 + frame2);
-        vertex.z += 1.35 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(-1.0, 0.0, cos(a)) * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2);
+                    vertex.z += 1.35 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(-1.0, 0.0, cos(a)) * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-        a = (vertex.x * 0.5 + frame2 + vertex.y * 0.5);
-        vertex.z += 0.2 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(-1.0, 0.0, cos(a)) * 0.13 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2 + vertex.y * 0.5);
+                    vertex.z += 0.2 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(-1.0, 0.0, cos(a)) * 0.13 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-        a = (vertex.x * 0.5 + frame2 - 0.33);
-        vertex.y += 0.8 * sin(a) * max(vertex.x, -1.0);
-            n += vec3(0.0, cos(a), -1.0) * 0.8 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
+                    a = (vertex.x * 0.5 + frame2 - 0.33);
+                    vertex.y += 0.8 * sin(a) * max(vertex.x, -1.0);
+                    n += vec3(0.0, cos(a), -1.0) * 0.8 * max(vertex.x, -1.0) / sqrt(1.0+cos(a)*cos(a));
 
-            normal = normalize(mix(normal,n,0.65));
-          }
-        ]],
-      },
-      shader    = include(SHADER_DIR .. "default.lua"),
-      deferred  = include(SHADER_DIR .. "default.lua"),
-      force     = true,
-      usecamera = false,
-      culling   = GL.BACK,
-      predl  = nil,
-      postdl = nil,
-      texunits  = {
-        [0] = '%%UNITDEFID:0',
-        [1] = '%%UNITDEFID:1',
-        [2] = '$shadow',
-        [3] = '$specular',
-        [4] = '$reflection',
-        [5] = 'unittextures/brdfLUT.png',
-        --[6] = 'unittextures/Flags_normals.dds',
-        [6] = '%NORMALTEX',
-      },
-      UnitCreated = UnitCreated,
-      DrawUnit = DrawUnit,
-   },
+                    normal = normalize(mix(normal,n,0.65));
+                }
+            ]],
+            PBR_INCLUDE = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL3.X\\pbr.inc.glsl", VFS.ZIP),
+        },
+        shader    = include(SHADER_DIR .. "default.lua"),
+        deferred  = include(SHADER_DIR .. "default.lua"),
+        force     = true,
+        usecamera = false,
+        culling   = GL.BACK,
+        predl  = nil,
+        postdl = nil,
+        texunits  = {
+            [0] = '%%UNITDEFID:0',
+            [1] = '%%UNITDEFID:1',
+            [2] = '$shadow',
+            [3] = '$specular',
+            [4] = '$reflection',
+            [5] = 'unittextures/brdfLUT.png',
+            --[6] = 'unittextures/Flags_normals.dds',
+            [6] = '%NORMALTEX',
+        },
+        UnitCreated = UnitCreated,
+        DrawUnit = DrawUnit,
+    },
 }
 
 
