@@ -40,18 +40,18 @@ struct PBRInfo
 // Calculation of the lighting contribution from an optional Image Based Light source.
 // Precomputed Environment Maps are required uniform inputs and are computed as outlined in [1].
 // See our README.md on Environment Maps [3] for additional discussion.
-vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
+vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection, samplerCube irradianceMap, samplerCube radianceMap)
 {
     // retrieve a scale and bias to F0. See [1], Figure 3
     vec3 brdf = texture2D(brdfLUT, vec2(pbrInputs.NdotV, 1.0 - pbrInputs.perceptualRoughness)).rgb;
-    vec3 diffuseLight = textureCube(specularTex, n).rgb;
+    vec3 diffuseLight = textureCube(irradianceMap, n).rgb;
 
 #ifdef USE_TEX_LOD
     float mipCount = 9.0; // resolution of 512x512
     float lod = (pbrInputs.perceptualRoughness * mipCount);
-    vec3 specularLight = textureCubeLodEXT(reflectTex, reflection, lod).rgb;
+    vec3 specularLight = textureCubeLodEXT(radianceMap, reflection, lod).rgb;
 #else
-    vec3 specularLight = textureCube(reflectTex, reflection).rgb;
+    vec3 specularLight = textureCube(radianceMap, reflection).rgb;
 #endif
 
     vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;

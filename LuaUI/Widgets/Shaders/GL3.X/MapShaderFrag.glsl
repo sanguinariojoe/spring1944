@@ -470,5 +470,6 @@ void main() {
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
 #else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
+	gl_FragColor = vec4(1.0);
 #endif
 }
