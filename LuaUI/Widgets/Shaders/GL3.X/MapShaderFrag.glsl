@@ -367,7 +367,7 @@ void main() {
 
 
 #ifndef DEFERRED_MODE
-	float cosAngleDiffuse = clamp(-dot(lightDir.xyz, normal), 0.0, 1.0);
+	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);
 #endif
 
@@ -470,6 +470,5 @@ void main() {
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
 #else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
-	gl_FragColor = vec4(1.0);
 #endif
 }

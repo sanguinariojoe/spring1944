@@ -323,7 +323,7 @@ function CompileShader(deferred)
     if deferred then
         definitions[#definitions + 1] = "#define DEFERRED_MODE"
     end
-    textures = {-- diffuseTex = "$map_gbuffer_difftex",
+    textures = {-- diffuseTex = {0, "$map_gbuffer_difftex"},
                 detailTex = {2, "$detail"},
                 normalsTex = {5, "$ssmf_normals"},
     }
@@ -333,10 +333,12 @@ function CompileShader(deferred)
     if glGetMapShaderFlag("SMF_VOID_GROUND") then
         definitions[#definitions + 1] = "#define SMF_VOID_GROUND"
     end
+    --[[ For some reason specular maps are not properly working
     if glGetMapShaderFlag("SMF_SPECULAR_LIGHTING") then
         definitions[#definitions + 1] = "#define SMF_SPECULAR_LIGHTING"
         textures["specularTex"] = {6, "$ssmf_specular"}
     end
+    --]]
     if glGetMapShaderFlag("SMF_DETAIL_TEXTURE_SPLATTING") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_TEXTURE_SPLATTING"
         if not glGetMapShaderFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING") then
