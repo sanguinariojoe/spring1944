@@ -1,5 +1,5 @@
 #ifndef AMBIENTMULT
-    #define AMBIENTMULT 0.5
+    #define AMBIENTMULT 1.0
 #endif
 #ifndef METALMULT
     #define METALMULT 1.0
@@ -40,11 +40,10 @@ struct PBRInfo
 // Calculation of the lighting contribution from an optional Image Based Light source.
 // Precomputed Environment Maps are required uniform inputs and are computed as outlined in [1].
 // See our README.md on Environment Maps [3] for additional discussion.
-vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection, samplerCube irradianceMap, samplerCube radianceMap)
+vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection, samplerCube radianceMap) // , samplerCube irradianceMap)
 {
     // retrieve a scale and bias to F0. See [1], Figure 3
     vec3 brdf = texture2D(brdfLUT, vec2(pbrInputs.NdotV, 1.0 - pbrInputs.perceptualRoughness)).rgb;
-    vec3 diffuseLight = textureCube(irradianceMap, n).rgb;
 
 #ifdef USE_TEX_LOD
     float mipCount = 9.0; // resolution of 512x512
@@ -54,10 +53,13 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection, samplerCube 
     vec3 specularLight = textureCube(radianceMap, reflection).rgb;
 #endif
 
-    vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
     vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-    return diffuse + specular;
+    // vec3 diffuseLight = textureCube(irradianceMap, n).rgb;
+    // vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
+
+    // return diffuse + specular;
+    return specular;
 }
 
 // Basic Lambertian diffuse

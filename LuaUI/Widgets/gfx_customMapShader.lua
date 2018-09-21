@@ -32,6 +32,7 @@ local HaveShadows       = Spring.HaveShadows
 local GetCameraPosition = Spring.GetCameraPosition
 local GetMapDrawMode    = Spring.GetMapDrawMode
 local GetGroundExtremes = Spring.GetGroundExtremes
+local GetMapOptions     = Spring.GetMapOptions
 
 
 CustomMapShaders = {
@@ -429,6 +430,8 @@ function CompileShader(deferred)
     Spring.Echo("------------------------------------- Map Fragment shader ---")
 
     -- Create the shader
+    local mapopts = GetMapOptions()
+    local metallic_base = tonumber(mapopts["metallic"] or "0.0")
     local newshader = glCreateShader({
         vertex = vertex,
         fragment = fragment,
@@ -449,6 +452,9 @@ function CompileShader(deferred)
                       splatDetailNormalTex2 = MAX_TEXTURE_UNITS - 3,
                       splatDetailNormalTex3 = MAX_TEXTURE_UNITS - 2,
                       splatDetailNormalTex4 = MAX_TEXTURE_UNITS - 1,
+                      brdfLUT = MAX_TEXTURE_UNITS - 16,
+        },
+        uniformFloat = {metallic_base = metallic_base,
         }
     })
     if not newshader then
@@ -556,6 +562,8 @@ function widget:DrawGroundPreForward()
     end
     setDefaultUniforms(uniforms)
     setDefaultTextures(CustomMapShaders.forward.textures)
+    -- PBR requires a last texture
+    glTexture(MAX_TEXTURE_UNITS - 16, 'unittextures/brdfLUT.png')
 end
 
 function widget:DrawGroundPreDeferred()

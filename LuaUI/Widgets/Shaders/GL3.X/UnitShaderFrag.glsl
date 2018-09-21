@@ -157,7 +157,7 @@ void main(void){
         vec3 color = NdotL * sunDiffuse * (diffuseContrib + specContrib);
 
         // Image based Lighting
-        color += getIBLContribution(pbrInputs, n, r, specularTex, reflectTex);
+        color += getIBLContribution(pbrInputs, n, r, reflectTex);  // , specularTex);
 
         // Shadows
         color *= shadow;

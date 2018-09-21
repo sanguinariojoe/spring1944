@@ -106,6 +106,8 @@ varying vec2 diffuseTexCoords;
 #endif
 
 
+uniform float metallic_base;
+
 %%PBR_INCLUDE%%
 
 
@@ -194,9 +196,7 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 
 
 vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
-	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
-
-	groundShadeInt.rgb = groundAmbientColor + groundDiffuseColor * (groundLightInt * groundShadowCoeff);
+	vec4 groundShadeInt = vec4(1.0);
 	groundShadeInt.rgb *= vec3(SMF_INTENSITY_MULT);
 
 #ifdef SMF_VOID_WATER
@@ -302,7 +302,8 @@ void main() {
 	vec2 specTexCoords = vertexWorldPos.xz * specularTexGen;
 	vec2 normTexCoords = vertexWorldPos.xz * normalTexGen;
 
-	// not calculated in the vertex shader to save varying components (OpenGL2.0 allows just 32)
+	// Normal
+	// ======
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 	vec3 normal = GetFragmentNormal(normTexCoords);
 
@@ -314,7 +315,6 @@ void main() {
 		vec3 sTangent = cross(normal, tTangent);
 		mat3 stnMatrix = mat3(sTangent, tTangent, normal);
 	#endif
-
 
 	#ifdef SMF_PARALLAX_MAPPING
 	{
@@ -343,7 +343,8 @@ void main() {
 	}
 	#endif
 
-
+	// Detail (to be appended to diffuse)
+	// ==================================
 	vec4 detailCol;
 
 	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
@@ -369,25 +370,9 @@ void main() {
 	#endif
 
 
-#ifndef DEFERRED_MODE
-	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
-	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);
-#endif
-
+	// Diffuse color
+	// =============
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 specularCol = vec4(0.0, 0.0, 0.0, 1.0);
-	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
-
-	#if !defined(DEFERRED_MODE) && defined(SMF_SKY_REFLECTIONS)
-	{
-		// cameraDir does not need to be normalized for reflect()
-		vec3 reflectDir = reflect(cameraDir, normal);
-		vec3 reflectCol = textureCube(skyReflectTex, gl_NormalMatrix * reflectDir).rgb;
-		vec3 reflectMod = texture2D(skyReflectModTex, specTexCoords).rgb;
-
-		diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, reflectMod);
-	}
-	#endif
 	#if !defined(DEFERRED_MODE) && defined(HAVE_INFOTEX)
 	{
 		// increase contrast and brightness for the overlays
@@ -397,81 +382,131 @@ void main() {
 		diffuseCol.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
 	}
 	#endif
+	diffuseCol += detailCol;
 
+	// Specular color
+	// ==============
+	// In maps the specular color is specified in a particular texture, so no
+	// need to extract it from the diffuse color
+	#ifdef SMF_SPECULAR_LIGHTING
+		vec4 specularCol = texture2D(specularTex, specTexCoords);
+	#else
+		vec4 specularCol = vec4(groundSpecularColor, groundSpecularExponent);
+	#endif
 
+	// Selfillumination
+	// ================
+	#ifdef SMF_LIGHT_EMISSION
+		// apply self-illumination aka. glow, not masked by shadows
+		vec4 emissionCol = texture2D(lightEmissionTex, specTexCoords);
+	#else
+		vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
+	#endif
 
+#ifdef DEFERRED_MODE
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol;
+	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
+	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
+	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
+#else
+	// Shadow
+	// ======
 	float shadowCoeff = 1.0;
-
-	#if !defined(DEFERRED_MODE) && defined(HAVE_SHADOWS)
-	{
+	#if defined(HAVE_SHADOWS)
 		vec4 vertexShadowPos = shadowMat * vertexWorldPos;
 			vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
 			vertexShadowPos.xy += shadowParams.xy;
 
 		// same as ARB shader: shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
 		shadowCoeff = mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, groundShadowDensity);
-	}
 	#endif
 
-	#ifndef DEFERRED_MODE
-	{
-		// GroundMaterialAmbientDiffuseColor * LightAmbientDiffuseColor
-		vec4 shadeInt = GetShadeInt(cosAngleDiffuse, shadowCoeff, diffuseCol.a);
-
-		gl_FragColor.rgb = (diffuseCol.rgb + detailCol.rgb) * shadeInt.rgb;
-		gl_FragColor.a = shadeInt.a;
-	}
+	// Metallic
+	// ========
+	float metallic = metallic_base;
+	#if defined(SMF_SKY_REFLECTIONS)
+		// In PBR this is handled considering it as a metal
+		vec3 reflectMod = texture2D(skyReflectModTex, specTexCoords).rgb;
+		metallic = max(max(reflectMod.r, reflectMod.g), reflectMod.b);
 	#endif
 
-	#ifdef SMF_LIGHT_EMISSION
-	{
-		// apply self-illumination aka. glow, not masked by shadows
-		emissionCol = texture2D(lightEmissionTex, specTexCoords);
+	// Roughness
+	// =========
+	float perceptualRoughness = 1.0 - specularCol.a;
+	// Roughness is authored as perceptual roughness; as is convention,
+	// convert to material roughness by squaring the perceptual roughness [2].
+	float alphaRoughness = perceptualRoughness * perceptualRoughness;
 
-		#ifndef DEFERRED_MODE
-		gl_FragColor.rgb = gl_FragColor.rgb * (1.0 - emissionCol.a) + emissionCol.rgb;
-		#endif
-	}
-	#endif
+	// PBR
+	// ===
+	// Compute reflectance.
+	float reflectance = max(max(specularCol.r, specularCol.g), specularCol.b);
 
-#ifdef SMF_SPECULAR_LIGHTING
-	specularCol = texture2D(specularTex, specTexCoords);
-#else
-	specularCol = vec4(groundSpecularColor, 1.0);
-#endif
+	// For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
+	// For very low reflectance range on highly diffuse objects (below 4%), incrementally reduce grazing reflecance to 0%.
+	// float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
+	float reflectance90 = reflectance;
+	vec3 specularEnvironmentR0 = specularCol.rgb;
+	vec3 specularEnvironmentR90 = vec3(1.0) * reflectance90;
 
-	#ifndef DEFERRED_MODE
-		// sun specular lighting contribution
-		#ifdef SMF_SPECULAR_LIGHTING
-			float specularExp  = specularCol.a * 16.0;
-		#else
-			float specularExp  = groundSpecularExponent;
-		#endif
+	vec3 n = normal;
+	vec3 v = -normalize(cameraDir);
+	vec3 l = lightDir.xyz;
+	vec3 h = normalize(l+v);
+	vec3 r = gl_NormalMatrix * (-normalize(reflect(v, n)));
 
+	float NdotL = clamp(dot(n, l), 0.001, 1.0);
+	float NdotV = clamp(abs(dot(n, v)), 0.001, 1.0);
+	float NdotH = clamp(dot(n, h), 0.0, 1.0);
+	float LdotH = clamp(dot(l, h), 0.0, 1.0);
+	float VdotH = clamp(dot(v, h), 0.0, 1.0);
 
-		float specularPow  = pow(cosAngleSpecular, specularExp);
+	PBRInfo pbrInputs = PBRInfo(
+		NdotL,
+		NdotV,
+		NdotH,
+		LdotH,
+		VdotH,
+		perceptualRoughness,
+		metallic,
+		specularEnvironmentR0,
+		specularEnvironmentR90,
+		alphaRoughness,
+		diffuseCol.rgb,
+		specularCol.rgb
+	);
 
-		vec3  specularInt  = specularCol.rgb * specularPow;
-		      specularInt *= shadowCoeff;
+	// Calculate the shading terms for the microfacet specular shading model
+	vec3 F = specularReflection(pbrInputs);
+	float G = geometricOcclusion(pbrInputs);
+	float D = microfacetDistribution(pbrInputs);
 
-		gl_FragColor.rgb += specularInt;
+	// Calculation of analytical lighting contribution
+	vec3 diffuseContrib = (1.0 - F) * diffuse(pbrInputs);
+	vec3 specContrib = F * G * D / (4.0 * NdotL * NdotV);
 
-		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
-			gl_FragColor.rgb += DynamicLighting(normal, diffuseCol.rgb, specularCol.rgb, specularExp);
-		#endif
-	#endif
+	// Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
+	vec3 color = NdotL * groundDiffuseColor * (diffuseContrib + specContrib);
 
+	// Image based Lighting
+	color += getIBLContribution(pbrInputs, n, r, skyReflectTex);  // , specularTex);
 
-#ifdef DEFERRED_MODE
-	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
-	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
-	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
-	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
+	// Shadows
+	color *= shadowCoeff;
 
-	// linearly transform the eye-space depths, might be more useful?
-	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;
-#else
+	// Ambient illumination
+	color += diffuseCol.rgb * groundAmbientColor * AMBIENTMULT;
+
+	// Water absortion
+	vec4 shadeInt = GetShadeInt(NdotL, shadowCoeff, diffuseCol.a);
+	color *= shadeInt.rgb;
+
+	// self-illumination
+	color = color * (1.0 - emissionCol.a) + emissionCol.rgb;
+
+	// Final color
+	gl_FragColor = vec4(color, shadeInt);
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
 #endif
 }
