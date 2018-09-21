@@ -306,6 +306,14 @@ function glGetMapShaderUniforms(names, shader)
 end
 
 
+local _plugins = {
+    PBR_INCLUDE = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL3.X\\pbr.inc.glsl", VFS.ZIP),
+}
+
+local function InsertPlugin(str)
+  return (_plugins and _plugins[str]) or ""
+end
+
 function CompileShader(deferred)
     -- Original shaders
     local vertex = VFS.LoadFile("LuaUI\\Widgets\\Shaders\\GL3.X\\MapShaderVert.glsl", VFS.ZIP)
@@ -399,6 +407,7 @@ function CompileShader(deferred)
     -- definitions[#definitions + 1] = "#define MAX_DYNAMIC_MAP_LIGHTS " .. tostring(glGetMapRendering("maxDynamicMapLight"))
     definitions = table.concat(definitions, "\n")
     fragment = definitions .. "\n" .. fragment
+    fragment = fragment:gsub("%%%%([%a_]+)%%%%", InsertPlugin);    
 
     local old_vertex, old_fragment
     if deferred then

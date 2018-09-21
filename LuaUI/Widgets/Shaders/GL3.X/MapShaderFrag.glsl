@@ -106,6 +106,9 @@ varying vec2 diffuseTexCoords;
 #endif
 
 
+%%PBR_INCLUDE%%
+
+
 /***********************************************************************/
 // Helper functions
 
