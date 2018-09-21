@@ -267,15 +267,10 @@ function glGetMapShaderUniformValue(name)
             return 1.0
         end
     elseif name == "normalTexGen" then
-        if glGetMapShaderFlag("SMF_BLEND_NORMALS") then
-            local texinfo = glTextureInfo("$ssmf_normals")
-            x = (texinfo.xsize - 1) / SQUARE_SIZE
-            z = (texinfo.ysize - 1) / SQUARE_SIZE
-            return {1.0 / x, 1.0 / z}
-        else
-            -- Warning here??
-            return {0, 0}
-        end
+        local texinfo = glTextureInfo("$normals")
+        x = (texinfo.xsize - 1) * SQUARE_SIZE
+        z = (texinfo.ysize - 1) * SQUARE_SIZE
+        return {1.0 / x, 1.0 / z}
     elseif name == "specularTexGen" then
         return {1.0 / MAPX, 1.0 / MAPZ}
     elseif name == "infoTexGen" then
@@ -325,7 +320,21 @@ function CompileShader(deferred)
     end
     textures = {-- diffuseTex = {0, "$map_gbuffer_difftex"},
                 detailTex = {2, "$detail"},
-                normalsTex = {5, "$ssmf_normals"},
+                -- shadowTex = {4, "$shadow"},
+                normalsTex = {5, "$normals"},
+                -- specularTex = {6, "$ssmf_specular"},
+                -- splatDetailTex = {7, "$ssmf_splat_detail"},
+                -- splatDistrTex = {8, "$ssmf_splat_distr"},
+                -- skyReflectTex = {9, "$map_reflection"},
+                -- skyReflectModTex = {10, "$sky_reflection"},
+                -- blendNormalsTex = {11, "$ssmf_normals"},
+                -- lightEmissionTex = {12, "$ssmf_emission"},
+                -- parallaxHeightTex = {13, "$ssmf_parallax"},
+                -- infoTex = {14, "$info"},
+                -- splatDetailNormalTex1 = {15, "$ssmf_splat_normals:0"},
+                -- splatDetailNormalTex2 = {16, "$ssmf_splat_normals:1"},
+                -- splatDetailNormalTex3 = {17, "$ssmf_splat_normals:2"},
+                -- splatDetailNormalTex4 = {18, "$ssmf_splat_normals:3"},
     }
     if glGetMapShaderFlag("SMF_VOID_WATER") then
         definitions[#definitions + 1] = "#define SMF_VOID_WATER"
