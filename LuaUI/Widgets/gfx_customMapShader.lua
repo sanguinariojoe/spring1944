@@ -67,7 +67,7 @@ MAPX = Game.mapSizeX
 MAPZ = Game.mapSizeZ
 PWR2MAPX = nextPowerOf2(MAPX / SQUARE_SIZE) * SQUARE_SIZE
 PWR2MAPZ = nextPowerOf2(MAPZ / SQUARE_SIZE) * SQUARE_SIZE
-SKIP_FRAMES = 1
+MAX_TEXTURE_UNITS = 32
 
 Uniform = {}
 Uniform.__index = Uniform
@@ -322,22 +322,22 @@ function CompileShader(deferred)
     -- further collisions. Bear in mind that we are not never unbinding the
     -- textures
     textures = {-- diffuseTex = {0, "$map_gbuffer_difftex"}, -- Already binded
-                detailTex = {102, "$detail"},
-                -- shadowTex = {104, "$shadow"},
-                normalsTex = {105, "$normals"},
-                -- specularTex = {106, "$ssmf_specular"},
-                -- splatDetailTex = {107, "$ssmf_splat_detail"},
-                -- splatDistrTex = {108, "$ssmf_splat_distr"},
-                -- skyReflectTex = {109, "$map_reflection"},
-                -- skyReflectModTex = {110, "$sky_reflection"},
-                -- blendNormalsTex = {111, "$ssmf_normals"},
-                -- lightEmissionTex = {112, "$ssmf_emission"},
-                -- parallaxHeightTex = {113, "$ssmf_parallax"},
-                -- infoTex = {114, "$info"},
-                -- splatDetailNormalTex1 = {115, "$ssmf_splat_normals:0"},
-                -- splatDetailNormalTex2 = {116, "$ssmf_splat_normals:1"},
-                -- splatDetailNormalTex3 = {117, "$ssmf_splat_normals:2"},
-                -- splatDetailNormalTex4 = {118, "$ssmf_splat_normals:3"},
+                detailTex = {2, "$detail"},
+                -- shadowTex = {MAX_TEXTURE_UNITS - 15, "$shadow"},
+                normalsTex = {MAX_TEXTURE_UNITS - 14, "$normals"},
+                -- specularTex = {MAX_TEXTURE_UNITS - 13, "$ssmf_specular"},
+                -- splatDetailTex = {MAX_TEXTURE_UNITS - 12, "$ssmf_splat_detail"},
+                -- splatDistrTex = {MAX_TEXTURE_UNITS - 11, "$ssmf_splat_distr"},
+                -- skyReflectTex = {MAX_TEXTURE_UNITS - 10, "$map_reflection"},
+                -- skyReflectModTex = {MAX_TEXTURE_UNITS - 9, "$sky_reflection"},
+                -- blendNormalsTex = {MAX_TEXTURE_UNITS - 8, "$ssmf_normals"},
+                -- lightEmissionTex = {MAX_TEXTURE_UNITS - 7, "$ssmf_emission"},
+                -- parallaxHeightTex = {MAX_TEXTURE_UNITS - 6, "$ssmf_parallax"},
+                -- infoTex = {MAX_TEXTURE_UNITS - 5, "$info"},
+                -- splatDetailNormalTex1 = {MAX_TEXTURE_UNITS - 4, "$ssmf_splat_normals:0"},
+                -- splatDetailNormalTex2 = {MAX_TEXTURE_UNITS - 3, "$ssmf_splat_normals:1"},
+                -- splatDetailNormalTex3 = {MAX_TEXTURE_UNITS - 2, "$ssmf_splat_normals:2"},
+                -- splatDetailNormalTex4 = {MAX_TEXTURE_UNITS - 1, "$ssmf_splat_normals:3"},
     }
     if glGetMapShaderFlag("SMF_VOID_WATER") then
         definitions[#definitions + 1] = "#define SMF_VOID_WATER"
@@ -347,22 +347,22 @@ function CompileShader(deferred)
     end
     if glGetMapShaderFlag("SMF_SPECULAR_LIGHTING") then
         definitions[#definitions + 1] = "#define SMF_SPECULAR_LIGHTING"
-        textures["specularTex"] = {106, "$ssmf_specular"}
+        textures["specularTex"] = {MAX_TEXTURE_UNITS - 13, "$ssmf_specular"}
     end
     if glGetMapShaderFlag("SMF_DETAIL_TEXTURE_SPLATTING") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_TEXTURE_SPLATTING"
         if not glGetMapShaderFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING") then
-            textures["splatDetailTex"] = {107, "$ssmf_splat_detail"}
-            textures["splatDistrTex"] = {108, "$ssmf_splat_distr"}
+            textures["splatDetailTex"] = {MAX_TEXTURE_UNITS - 12, "$ssmf_splat_detail"}
+            textures["splatDistrTex"] = {MAX_TEXTURE_UNITS - 11, "$ssmf_splat_distr"}
         end
     end
     if glGetMapShaderFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_NORMAL_TEXTURE_SPLATTING"
-        textures["splatDistrTex"] = {108, "$ssmf_splat_distr"}
-        textures["splatDetailNormalTex1"] = {115, "$ssmf_splat_normals:0"}
-        textures["splatDetailNormalTex2"] = {116, "$ssmf_splat_normals:1"}
-        textures["splatDetailNormalTex3"] = {117, "$ssmf_splat_normals:2"}
-        textures["splatDetailNormalTex4"] = {118, "$ssmf_splat_normals:3"}
+        textures["splatDistrTex"] = {MAX_TEXTURE_UNITS - 11, "$ssmf_splat_distr"}
+        textures["splatDetailNormalTex1"] = {MAX_TEXTURE_UNITS - 4, "$ssmf_splat_normals:0"}
+        textures["splatDetailNormalTex2"] = {MAX_TEXTURE_UNITS - 3, "$ssmf_splat_normals:1"}
+        textures["splatDetailNormalTex3"] = {MAX_TEXTURE_UNITS - 2, "$ssmf_splat_normals:2"}
+        textures["splatDetailNormalTex4"] = {MAX_TEXTURE_UNITS - 1, "$ssmf_splat_normals:3"}
     end
     if glGetMapShaderFlag("SMF_DETAIL_NORMAL_DIFFUSE_ALPHA") then
         definitions[#definitions + 1] = "#define SMF_DETAIL_NORMAL_DIFFUSE_ALPHA"
@@ -372,28 +372,28 @@ function CompileShader(deferred)
     end
     if glGetMapShaderFlag("SMF_SKY_REFLECTIONS") then
         definitions[#definitions + 1] = "#define SMF_SKY_REFLECTIONS"
-        textures["skyReflectTex"] = {109, "$map_reflection"}
-        textures["skyReflectModTex"] = {110, "$sky_reflection"}
+        textures["skyReflectTex"] = {MAX_TEXTURE_UNITS - 10, "$map_reflection"}
+        textures["skyReflectModTex"] = {MAX_TEXTURE_UNITS - 9, "$sky_reflection"}
     end
     if glGetMapShaderFlag("SMF_BLEND_NORMALS") then
         definitions[#definitions + 1] = "#define SMF_BLEND_NORMALS"
-        textures["blendNormalsTex"] = {111, "$ssmf_normals"}
+        textures["blendNormalsTex"] = {MAX_TEXTURE_UNITS - 8, "$ssmf_normals"}
     end
     if glGetMapShaderFlag("SMF_LIGHT_EMISSION") then
         definitions[#definitions + 1] = "#define SMF_LIGHT_EMISSION"
-        textures["lightEmissionTex"] = {112, "$ssmf_emission"}
+        textures["lightEmissionTex"] = {MAX_TEXTURE_UNITS - 7, "$ssmf_emission"}
     end
     if glGetMapShaderFlag("SMF_PARALLAX_MAPPING") then
         definitions[#definitions + 1] = "#define SMF_PARALLAX_MAPPING"
-        textures["parallaxHeightTex"] = {113, "$ssmf_parallax"}
+        textures["parallaxHeightTex"] = {MAX_TEXTURE_UNITS - 6, "$ssmf_parallax"}
     end
     if glGetMapShaderFlag("HAVE_SHADOWS") then
         definitions[#definitions + 1] = "#define HAVE_SHADOWS"
-        textures["shadowTex"] = {104, "$shadow"}
+        textures["shadowTex"] = {MAX_TEXTURE_UNITS - 15, "$shadow"}
     end
     if glGetMapShaderFlag("HAVE_INFOTEX") then
         definitions[#definitions + 1] = "#define HAVE_INFOTEX"
-        textures["infoTex"] = {114, "$info"}
+        textures["infoTex"] = {MAX_TEXTURE_UNITS - 5, "$info"}
     end
     -- definitions[#definitions + 1] = "#define BASE_DYNAMIC_MAP_LIGHT " .. tostring(glGetMapRendering("baseDynamicMapLight"))
     -- definitions[#definitions + 1] = "#define MAX_DYNAMIC_MAP_LIGHTS " .. tostring(glGetMapRendering("maxDynamicMapLight"))
@@ -424,22 +424,22 @@ function CompileShader(deferred)
         vertex = vertex,
         fragment = fragment,
         uniformInt = {diffuseTex = 0,
-                      detailTex = 102,
-                      shadowTex = 104,
-                      normalsTex = 105,
-                      specularTex = 106,
-                      splatDetailTex = 107,
-                      splatDistrTex = 108,
-                      skyReflectTex = 109,
-                      skyReflectModTex = 110,
-                      blendNormalsTex = 111,
-                      lightEmissionTex = 112,
-                      parallaxHeightTex = 113,
-                      infoTex = 114,
-                      splatDetailNormalTex1 = 115,
-                      splatDetailNormalTex2 = 116,
-                      splatDetailNormalTex3 = 117,
-                      splatDetailNormalTex4 = 118,
+                      detailTex = 2,
+                      shadowTex = MAX_TEXTURE_UNITS - 15,
+                      normalsTex = MAX_TEXTURE_UNITS - 14,
+                      specularTex = MAX_TEXTURE_UNITS - 13,
+                      splatDetailTex = MAX_TEXTURE_UNITS - 12,
+                      splatDistrTex = MAX_TEXTURE_UNITS - 11,
+                      skyReflectTex = MAX_TEXTURE_UNITS - 10,
+                      skyReflectModTex = MAX_TEXTURE_UNITS - 9,
+                      blendNormalsTex = MAX_TEXTURE_UNITS - 8,
+                      lightEmissionTex = MAX_TEXTURE_UNITS - 7,
+                      parallaxHeightTex = MAX_TEXTURE_UNITS - 6,
+                      infoTex = MAX_TEXTURE_UNITS - 5,
+                      splatDetailNormalTex1 = MAX_TEXTURE_UNITS - 4,
+                      splatDetailNormalTex2 = MAX_TEXTURE_UNITS - 3,
+                      splatDetailNormalTex3 = MAX_TEXTURE_UNITS - 2,
+                      splatDetailNormalTex4 = MAX_TEXTURE_UNITS - 1,
         }
     })
     if not newshader then
@@ -512,10 +512,6 @@ function unsetDefaultTextures(textures)
 end
 
 function widget:DrawGenesis()
-    if SKIP_FRAMES > 0 then
-        SKIP_FRAMES = SKIP_FRAMES - 1
-        return
-    end
     local newshader
     newshader = CompileShader()
     newshader = CompileShader(true) or newshader
